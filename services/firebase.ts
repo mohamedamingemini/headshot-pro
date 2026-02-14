@@ -1,35 +1,64 @@
 
-import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, FacebookAuthProvider, OAuthProvider } from "firebase/auth";
+import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
+import { getAuth, GoogleAuthProvider, FacebookAuthProvider, OAuthProvider, Auth } from "firebase/auth";
+import { getAnalytics, Analytics } from "firebase/analytics";
+import { getFirestore, Firestore } from "firebase/firestore";
 
-// Your web app's Firebase configuration
-// These should be set in your .env file
-const firebaseConfig = {
-  apiKey: process.env.VITE_FIREBASE_API_KEY,
-  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.VITE_FIREBASE_APP_ID
+// Safe variable access helper
+const getEnv = (key: string, defaultValue: string) => {
+  try {
+    // @ts-ignore
+    if (import.meta && import.meta.env && import.meta.env[key]) {
+      // @ts-ignore
+      return import.meta.env[key];
+    }
+  } catch (e) {
+    // ignore
+  }
+  return defaultValue;
 };
 
-// Initialize Firebase only if config is valid
-let app;
-let auth: any;
+const firebaseConfig = {
+  apiKey: getEnv("VITE_FIREBASE_API_KEY", "AIzaSyA1oy-aDXoHN5dhM6DE2irI98HiZ3t1w_8"),
+  authDomain: getEnv("VITE_FIREBASE_AUTH_DOMAIN", "proheadshot-ai-f7c02.firebaseapp.com"),
+  projectId: getEnv("VITE_FIREBASE_PROJECT_ID", "proheadshot-ai-f7c02"),
+  storageBucket: getEnv("VITE_FIREBASE_STORAGE_BUCKET", "proheadshot-ai-f7c02.firebasestorage.app"),
+  messagingSenderId: getEnv("VITE_FIREBASE_MESSAGING_SENDER_ID", "600103177183"),
+  appId: getEnv("VITE_FIREBASE_APP_ID", "1:600103177183:web:f9bde70f56ff8cb290526a"),
+  measurementId: getEnv("VITE_FIREBASE_MEASUREMENT_ID", "G-EMRDHJ3Q21")
+};
+
+let app: FirebaseApp | undefined;
+let auth: Auth | undefined;
+let analytics: Analytics | undefined;
+let db: Firestore | undefined;
 
 try {
-  if (firebaseConfig.apiKey) {
-    app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
+  // Check if an app is already initialized to prevent "Component has not been registered" errors
+  if (getApps().length > 0) {
+    app = getApp();
   } else {
-    console.warn("Firebase config missing. Authentication disabled.");
+    app = initializeApp(firebaseConfig);
+  }
+
+  // Initialize services
+  auth = getAuth(app);
+  db = getFirestore(app);
+
+  // Initialize analytics only in browser
+  if (typeof window !== 'undefined') {
+    try {
+      analytics = getAnalytics(app);
+    } catch (e) {
+      console.warn("Analytics failed to initialize (optional):", e);
+    }
   }
 } catch (error) {
-  console.error("Firebase initialization error:", error);
+  console.error("Firebase initialization failed:", error);
 }
 
 const googleProvider = new GoogleAuthProvider();
 const facebookProvider = new FacebookAuthProvider();
 const appleProvider = new OAuthProvider('apple.com');
 
-export { auth, googleProvider, facebookProvider, appleProvider };
+export { auth, db, googleProvider, facebookProvider, appleProvider, analytics };

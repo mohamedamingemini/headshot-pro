@@ -8,6 +8,7 @@ declare namespace NodeJS {
     VITE_FIREBASE_STORAGE_BUCKET: string;
     VITE_FIREBASE_MESSAGING_SENDER_ID: string;
     VITE_FIREBASE_APP_ID: string;
+    VITE_FIREBASE_MEASUREMENT_ID: string;
     [key: string]: string | undefined;
   }
 }
@@ -19,6 +20,7 @@ interface ImportMetaEnv {
   readonly VITE_FIREBASE_STORAGE_BUCKET: string
   readonly VITE_FIREBASE_MESSAGING_SENDER_ID: string
   readonly VITE_FIREBASE_APP_ID: string
+  readonly VITE_FIREBASE_MEASUREMENT_ID: string
 }
 
 interface ImportMeta {

@@ -1,7 +1,9 @@
+
 import React, { useRef, useState } from 'react';
 import { UploadCloud } from 'lucide-react';
 import Button from './Button';
 import { useLanguage } from '../contexts/LanguageContext';
+import { compressImage } from '../utils/canvasUtils';
 
 interface UploadZoneProps {
   onImageSelected: (base64: string) => void;
@@ -10,9 +12,10 @@ interface UploadZoneProps {
 const UploadZone: React.FC<UploadZoneProps> = ({ onImageSelected }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   const { t } = useLanguage();
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -21,18 +24,30 @@ const UploadZone: React.FC<UploadZoneProps> = ({ onImageSelected }) => {
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+    // Allow up to 15MB because we compress client-side
+    if (file.size > 15 * 1024 * 1024) { 
       setError(t('errorSize'));
       return;
     }
 
     setError(null);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64 = reader.result as string;
-      onImageSelected(base64);
-    };
-    reader.readAsDataURL(file);
+    setIsProcessing(true);
+
+    try {
+      // Compress image before passing it up
+      // 1600px width is sufficient for AI headshots, 0.85 quality retains detail
+      const compressedBase64 = await compressImage(file, 1600, 0.85);
+      onImageSelected(compressedBase64);
+    } catch (err) {
+      console.error("Image processing error:", err);
+      setError("Failed to process image. Please try another photo.");
+    } finally {
+      setIsProcessing(false);
+      // Reset input value so same file can be selected again if needed
+      if (event.target) {
+        event.target.value = '';
+      }
+    }
   };
 
   return (
@@ -57,7 +72,12 @@ const UploadZone: React.FC<UploadZoneProps> = ({ onImageSelected }) => {
           className="hidden"
         />
 
-        <Button onClick={() => fileInputRef.current?.click()} variant="primary" className="w-full sm:w-auto">
+        <Button 
+          onClick={() => fileInputRef.current?.click()} 
+          variant="primary" 
+          className="w-full sm:w-auto"
+          isLoading={isProcessing}
+        >
           {t('selectPhoto')}
         </Button>
         

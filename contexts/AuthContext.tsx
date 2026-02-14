@@ -22,12 +22,12 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  // We allow the UI to showauth features even if config is missing, 
-  // so the user gets a helpful error message in the modal instead of invisible buttons.
-  const isAuthEnabled = true;
+  // We allow the UI to show auth features even if config is missing or auth failed
+  const isAuthEnabled = !!auth;
 
   useEffect(() => {
     if (!auth) {
+      console.warn("Auth service is not available. Authentication features will be disabled.");
       setLoading(false);
       return;
     }

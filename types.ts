@@ -17,4 +17,17 @@ export interface ChatMessage {
   timestamp: number;
 }
 
-export type AppState = 'upload' | 'cropping' | 'style-selection' | 'generating' | 'result' | 'privacy' | 'terms';
+export interface Article {
+  id: string;
+  title: string;
+  excerpt: string;
+  content: string; // HTML string supported
+  category: 'tip' | 'job' | 'news';
+  author: string;
+  date: string;
+  imageUrl: string;
+  readTime: string;
+  tags?: string[];
+}
+
+export type AppState = 'upload' | 'cropping' | 'style-selection' | 'generating' | 'result' | 'privacy' | 'terms' | 'contact' | 'about' | 'blog-list' | 'blog-post' | 'admin';

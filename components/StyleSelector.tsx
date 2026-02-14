@@ -1,6 +1,7 @@
+
 import React, { useState, useMemo } from 'react';
 import { HeadshotStyle } from '../types';
-import { HEADSHOT_STYLES } from '../constants';
+import { HEADSHOT_STYLES, AD_CONFIG } from '../constants';
 import { Check, Loader2, Sparkles, Wand2, Play } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import AdSense from './AdSense';
@@ -101,6 +102,8 @@ const StyleCard: React.FC<{
              src={style.thumbnail} 
              alt={style.name}
              onLoad={() => setIsLoaded(true)}
+             loading="lazy"
+             decoding="async"
              className="w-full h-full object-cover absolute inset-0 z-0 transition-transform duration-700 group-hover:scale-110"
            />
 
@@ -115,6 +118,8 @@ const StyleCard: React.FC<{
                   alt="Preview"
                   style={getPreviewStyle(style.id)}
                   className="w-full h-full object-cover"
+                  loading="lazy"
+                  decoding="async"
                 />
                 <div className={`absolute inset-0 ${getOverlayClass(style.id)}`} />
              </div>
@@ -127,6 +132,8 @@ const StyleCard: React.FC<{
                   src={previewImage} 
                   alt="AI Preview"
                   className="w-full h-full object-cover"
+                  loading="lazy"
+                  decoding="async"
                 />
                 <div className="absolute top-2 left-2 bg-indigo-600/90 backdrop-blur-md text-white text-[10px] px-2 py-1 rounded-full flex items-center gap-1">
                    <Sparkles className="w-3 h-3" />
@@ -214,7 +221,7 @@ const StyleSelector: React.FC<StyleSelectorProps> = ({ selectedStyleId, onSelect
                      </span>
                      <div className="w-full h-full flex items-center justify-center bg-slate-900">
                         <AdSense 
-                            slot="8901234567" // Placeholder for the shuffled tile ad
+                            slot={AD_CONFIG.SLOTS.STYLE_GRID_CARD} 
                             variant="card"
                             format="rectangle"
                             className="flex items-center justify-center"

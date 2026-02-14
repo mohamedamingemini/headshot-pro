@@ -1,4 +1,6 @@
-import React, { useEffect, useState } from 'react';
+
+import React, { useEffect, useState, useRef } from 'react';
+import { AD_CONFIG } from '../constants';
 
 interface AdSenseProps {
   slot: string;
@@ -12,7 +14,7 @@ interface AdSenseProps {
 
 const AdSense: React.FC<AdSenseProps> = ({
   slot,
-  client = 'ca-pub-7104907532767716', 
+  client = AD_CONFIG.CLIENT_ID, 
   format = 'auto',
   responsive = true,
   className = '',
@@ -20,6 +22,7 @@ const AdSense: React.FC<AdSenseProps> = ({
   style
 }) => {
   const [isDev, setIsDev] = useState(false);
+  const adPushed = useRef(false);
 
   useEffect(() => {
     // Check for localhost or valid local IPs to show placeholder
@@ -29,14 +32,18 @@ const AdSense: React.FC<AdSenseProps> = ({
       return;
     }
 
+    // Only push the ad once per component mount
+    if (adPushed.current) return;
+
     try {
       // @ts-ignore
       const adsbygoogle = window.adsbygoogle || [];
       adsbygoogle.push({});
+      adPushed.current = true;
     } catch (e) {
       console.error('AdSense load error:', e);
     }
-  }, []);
+  }, [slot]); // Re-run only if slot changes (should be stable usually)
 
   if (isDev) {
     return (

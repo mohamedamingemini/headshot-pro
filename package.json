@@ -1,3 +1,4 @@
+
 {
   "name": "proheadshot-ai",
   "private": true,
@@ -10,11 +11,11 @@
   },
   "dependencies": {
     "@google/genai": "^1.41.0",
-    "firebase": "^12.9.0",
     "lucide-react": "^0.564.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "react-easy-crop": "^5.0.0"
+    "react-easy-crop": "^5.0.0",
+    "firebase": "^10.8.1"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",

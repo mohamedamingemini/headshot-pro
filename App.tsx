@@ -10,40 +10,120 @@ import ImageCropper from './components/ImageCropper';
 import Footer from './components/Footer';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsConditions from './components/TermsConditions';
-import { generateHeadshotVariations, editHeadshot } from './services/geminiService';
-import { checkDailyLimit, incrementDailyUsage } from './services/usageService';
-import { AppState, ChatMessage } from './types';
-import { HEADSHOT_STYLES } from './constants';
-import { Wand2, AlertCircle } from 'lucide-react';
+import ContactUs from './components/ContactUs';
+import About from './components/About';
+import BlogList from './components/BlogList';
+import BlogPost from './components/BlogPost';
+import AdminEditor from './components/AdminEditor';
+import RewardedAdModal from './components/RewardedAdModal';
+import EarnCreditsModal from './components/EarnCreditsModal';
+// import AuthModal from './components/AuthModal'; // Disabled
+import SEO from './components/SEO';
+import { generateHeadshot, editHeadshot } from './services/geminiService';
+import { checkDailyLimit, incrementDailyUsage, addCredits, recordLinkedInClaim } from './services/usageService';
+import { AppState, ChatMessage, Article } from './types';
+import { HEADSHOT_STYLES, AD_CONFIG } from './constants';
+import { Wand2, AlertCircle, PlayCircle } from 'lucide-react';
 import { useLanguage } from './contexts/LanguageContext';
-import { useAuth } from './contexts/AuthContext';
+import { AuthProvider } from './contexts/AuthContext';
 
 const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>('upload');
-  // State to remember where to go back to from legal pages
   const [previousState, setPreviousState] = useState<AppState>('upload');
   
-  // tempImage holds the raw uploaded image before cropping
   const [tempImage, setTempImage] = useState<string | null>(null);
-  // originalImage holds the final cropped/confirmed image to be used for generation
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [currentImage, setCurrentImage] = useState<string | null>(null);
-  
-  // Variations state
-  const [variations, setVariations] = useState<string[]>([]);
 
   const [selectedStyleId, setSelectedStyleId] = useState<string | null>(null);
+  const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
+  
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [usageUpdateKey, setUsageUpdateKey] = useState(0);
+
+  const [showRewardedAd, setShowRewardedAd] = useState(false);
+  const [showEarnCredits, setShowEarnCredits] = useState(false);
+  // const [showAuthModal, setShowAuthModal] = useState(false); // Disabled
+
   const { t, language } = useLanguage();
-  const { user } = useAuth();
   
-  // History state
   const [imageHistory, setImageHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
-
-  // Chat state for editing
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+
+  const getSEOProps = () => {
+    switch (appState) {
+      case 'privacy':
+        return { 
+          title: t('privacyPolicy'), 
+          description: 'Privacy Policy for ProHeadshot AI. Learn how we handle your data and images.',
+          canonicalUrl: 'https://proheadshot.ai/privacy'
+        };
+      case 'terms':
+        return { 
+          title: t('termsConditions'), 
+          description: 'Terms and conditions for using ProHeadshot AI services.',
+          canonicalUrl: 'https://proheadshot.ai/terms'
+        };
+      case 'contact':
+        return { 
+          title: t('contactUs'), 
+          description: 'Contact ProHeadshot AI support and feedback.',
+          canonicalUrl: 'https://proheadshot.ai/contact'
+        };
+      case 'about':
+        return { 
+          title: t('aboutUs'), 
+          description: 'Learn about ProHeadshot AI and our mission to democratize professional photography.',
+          canonicalUrl: 'https://proheadshot.ai/about'
+        };
+      case 'blog-list':
+        return {
+          title: t('blogTitle'),
+          description: t('blogSubtitle'),
+          canonicalUrl: 'https://proheadshot.ai/blog'
+        };
+      case 'blog-post':
+        if (selectedArticle) {
+          return {
+            title: selectedArticle.title,
+            description: selectedArticle.excerpt,
+            image: selectedArticle.imageUrl,
+            type: 'article' as const,
+            canonicalUrl: `https://proheadshot.ai/blog/${selectedArticle.id}`
+          };
+        }
+        return {
+          title: 'Article | ProHeadshot AI',
+          description: 'Read the latest tips and career advice.',
+          canonicalUrl: `https://proheadshot.ai/blog`
+        };
+      case 'admin':
+        return {
+          title: 'Admin Dashboard | ProHeadshot AI',
+          description: 'Manage content.'
+        };
+      case 'style-selection':
+        const activeStyle = selectedStyleId ? HEADSHOT_STYLES.find(s => s.id === selectedStyleId) : null;
+        return { 
+          title: t('chooseStyle'), 
+          description: activeStyle 
+            ? `Create a ${activeStyle.name} headshot with AI. ${activeStyle.description}`
+            : 'Select from various professional headshot styles including Corporate, Tech, and Outdoor.',
+          image: activeStyle?.thumbnail
+        };
+      case 'result':
+        return { 
+          title: 'Your Professional Headshots', 
+          description: 'View, edit, and download your AI-generated professional headshots.' 
+        };
+      default:
+        return {};
+    }
+  };
+
+  const seoProps = getSEOProps();
 
   const handleImageSelected = (base64: string) => {
     setTempImage(base64);
@@ -69,10 +149,11 @@ const App: React.FC = () => {
   const handleGenerate = async () => {
     if (!originalImage || !selectedStyleId) return;
 
-    // Check Daily Limit with User ID
-    const limitCheck = checkDailyLimit(user?.uid);
+    // Check Daily Limit
+    const limitCheck = checkDailyLimit();
     if (!limitCheck.allowed) {
       setError(t('dailyLimitReached').replace('{time}', limitCheck.timeRemainingStr || '24h'));
+      setShowEarnCredits(true); // Auto-open earn credits modal if limit reached
       return;
     }
 
@@ -83,30 +164,24 @@ const App: React.FC = () => {
     setError(null);
 
     try {
-      // Generate 4 variations instead of just one
-      const generatedResults = await generateHeadshotVariations(originalImage, style.promptModifier, 4);
+      const generatedImage = await generateHeadshot(originalImage, style.promptModifier);
       
-      // If successful, increment usage count with User ID
-      incrementDailyUsage(user?.uid);
+      incrementDailyUsage();
+      setUsageUpdateKey(prev => prev + 1);
 
-      setVariations(generatedResults);
-      setCurrentImage(generatedResults[0]); // Select the first one by default
-      
-      // Initialize history with the first one
-      setImageHistory([generatedResults[0]]);
+      setCurrentImage(generatedImage);
+      setImageHistory([generatedImage]);
       setHistoryIndex(0);
-      
       setAppState('result');
       
-      // Initialize chat with the result
       const styleName = language === 'ar' ? style.name_ar : style.name;
       setChatMessages([
         {
           id: 'init',
           role: 'assistant',
           text: language === 'ar' 
-            ? `ها هي صور ${styleName}! لقد قمت بإنشاء عدة تنويعات لك. اختر النسخة التي تفضلها، وأخبرني إذا كنت تريد إجراء أي تعديلات.`
-            : `Here are your ${styleName} headshots! I've generated a few variations. Select the one you like best, and let me know if you want to make any edits.`,
+            ? `ها هي صورتك بنمط ${styleName}! أخبرني إذا كنت تريد إجراء أي تعديلات.`
+            : `Here is your ${styleName} headshot! Let me know if you want to make any edits.`,
           timestamp: Date.now()
         }
       ]);
@@ -116,42 +191,6 @@ const App: React.FC = () => {
     } finally {
       setIsGenerating(false);
     }
-  };
-  
-  const handleGenerateMore = async () => {
-    if (!originalImage || !selectedStyleId) return;
-
-    // Check Daily Limit for "Generate More" as well
-    const limitCheck = checkDailyLimit(user?.uid);
-    if (!limitCheck.allowed) {
-      setError(t('dailyLimitReached').replace('{time}', limitCheck.timeRemainingStr || '24h'));
-      return;
-    }
-
-    const style = HEADSHOT_STYLES.find(s => s.id === selectedStyleId);
-    if (!style) return;
-
-    setIsGenerating(true);
-    
-    try {
-      // Generate 4 more variations
-      const newVariations = await generateHeadshotVariations(originalImage, style.promptModifier, 4);
-      
-      // If successful, increment usage count with User ID
-      incrementDailyUsage(user?.uid);
-
-      setVariations(prev => [...prev, ...newVariations]);
-    } catch (err: any) {
-      setError(err.message || t('errorGeneric'));
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const handleVariationSelect = (image: string) => {
-    setCurrentImage(image);
-    setImageHistory([image]);
-    setHistoryIndex(0);
   };
 
   const handleEditMessage = async (text: string, customSuccessMessage?: string) => {
@@ -220,7 +259,6 @@ const App: React.FC = () => {
     setOriginalImage(null);
     setTempImage(null);
     setCurrentImage(null);
-    setVariations([]);
     setSelectedStyleId(null);
     setChatMessages([]);
     setImageHistory([]);
@@ -228,8 +266,8 @@ const App: React.FC = () => {
     setError(null);
   };
 
-  const handleLegalNavigation = (page: 'privacy' | 'terms') => {
-    if (appState !== 'privacy' && appState !== 'terms') {
+  const handleLegalNavigation = (page: 'privacy' | 'terms' | 'contact' | 'about' | 'blog-list' | 'admin') => {
+    if (['upload', 'style-selection', 'result', 'blog-post', 'admin'].includes(appState)) {
       setPreviousState(appState);
     }
     setAppState(page);
@@ -237,110 +275,189 @@ const App: React.FC = () => {
   };
 
   const handleLegalBack = () => {
-    setAppState(previousState);
+    if (appState === 'blog-post') {
+      setAppState('blog-list');
+    } else {
+      setAppState(previousState);
+    }
+  };
+
+  const handleSelectArticle = (article: Article) => {
+    setSelectedArticle(article);
+    setPreviousState(appState);
+    setAppState('blog-post');
+  };
+
+  const handleAdRewardGranted = () => {
+    addCredits(1);
+    setUsageUpdateKey(prev => prev + 1);
+    setError(null);
+  };
+
+  const handleLinkedInShare = async () => {
+    // Check limit on UI side is handled by Modal, but we record here
+    recordLinkedInClaim();
+    
+    // Reward credits
+    addCredits(3);
+    setUsageUpdateKey(prev => prev + 1);
+    setError(null);
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-200 flex flex-col">
-      <Header onReset={handleReset} canReset={appState !== 'upload' && appState !== 'privacy' && appState !== 'terms'} />
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8 w-full flex-grow pb-12">
+    <AuthProvider>
+      <div className="min-h-screen bg-slate-900 text-slate-200 flex flex-col">
+        <SEO {...seoProps} />
         
-        {error && (
-          <div className="mb-6 p-4 bg-red-900/50 border border-red-700 rounded-xl flex items-center gap-3 text-red-200 animate-fadeIn">
-            <AlertCircle className="w-5 h-5 shrink-0" />
-            <p>{error}</p>
-          </div>
-        )}
+        <RewardedAdModal 
+          isOpen={showRewardedAd}
+          onClose={() => setShowRewardedAd(false)}
+          onRewardGranted={handleAdRewardGranted}
+        />
 
-        {appState === 'privacy' && <PrivacyPolicy onBack={handleLegalBack} />}
-        {appState === 'terms' && <TermsConditions onBack={handleLegalBack} />}
+        <EarnCreditsModal
+          isOpen={showEarnCredits}
+          onClose={() => setShowEarnCredits(false)}
+          onWatchAd={() => setShowRewardedAd(true)}
+          onShareLinkedIn={handleLinkedInShare}
+          generatedImage={currentImage} // Pass the generated image here
+        />
 
-        {appState === 'upload' && (
-           <div className="flex flex-col items-center animate-fadeIn mt-6 sm:mt-12">
-             <div className="text-center mb-8 sm:mb-10 px-4">
-               <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-4 tracking-tight leading-tight">
-                 {t('heroTitle')} <br className="hidden sm:block" />
-                 <span className="text-indigo-500 block sm:inline">{t('heroSubtitle')}</span>
-               </h2>
-               <p className="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
-                 {t('heroDesc')}
-               </p>
-             </div>
-             <UploadZone onImageSelected={handleImageSelected} />
-             
-             <AdSense slot="1234567890" className="mt-8 sm:mt-12" />
-           </div>
-        )}
+        {/* 
+        <AuthModal 
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+        /> 
+        */}
 
-        {appState === 'cropping' && tempImage && (
-          <ImageCropper 
-            imageSrc={tempImage}
-            onCropComplete={handleCropComplete}
-            onCancel={handleCropCancel}
-          />
-        )}
+        <Header 
+          onReset={handleReset} 
+          canReset={['style-selection', 'result'].includes(appState)} 
+          refreshKey={usageUpdateKey}
+          onOpenCredits={() => setShowEarnCredits(true)}
+          onNavigateBlog={() => handleLegalNavigation('blog-list')}
+          // onOpenAuth={() => setShowAuthModal(true)} // Disabled
+        />
 
-        {appState === 'style-selection' && (
-          <div className="space-y-6 sm:space-y-8 animate-fadeIn">
-            <div className="flex flex-col sm:flex-row justify-between items-center border-b border-slate-800 pb-6 gap-4">
-               <div className="flex items-center gap-4 w-full sm:w-auto">
-                 <div className="w-16 h-16 rounded-lg overflow-hidden border border-slate-600 shrink-0">
-                    <img src={originalImage || ''} className="w-full h-full object-cover" alt="Source" />
-                 </div>
-                 <div>
-                   <h3 className="text-lg font-medium text-white">{t('sourceImage')}</h3>
-                   <button onClick={() => setAppState('upload')} className="text-sm text-indigo-400 hover:text-indigo-300">{t('changePhoto')}</button>
-                 </div>
-               </div>
-               
-               <Button 
-                 onClick={handleGenerate} 
-                 disabled={!selectedStyleId} 
-                 isLoading={isGenerating}
-                 className="w-full sm:w-auto min-w-[160px]"
-               >
-                 <Wand2 className="w-4 h-4 mr-2 rtl:ml-2 rtl:mr-0" />
-                 {t('generateHeadshot')}
-               </Button>
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8 w-full flex-grow pb-12">
+          
+          {error && (
+            <div className="mb-6 p-4 bg-red-900/50 border border-red-700 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4 text-red-200 animate-fadeIn">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 shrink-0" />
+                <p>{error}</p>
+              </div>
+              
+              {error.includes('limit') && (
+                <div className="flex gap-2 w-full sm:w-auto">
+                   <button 
+                     onClick={() => setShowEarnCredits(true)}
+                     className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border border-slate-600 whitespace-nowrap"
+                   >
+                     <PlayCircle className="w-4 h-4 text-indigo-400" />
+                     {t('getMoreCredits')}
+                   </button>
+                </div>
+              )}
             </div>
-            
-            <AdSense slot="2345678901" />
+          )}
 
-            <StyleSelector 
-              selectedStyleId={selectedStyleId} 
-              onSelectStyle={handleStyleSelected} 
-              originalImage={originalImage || ''}
+          {appState === 'privacy' && <PrivacyPolicy onBack={handleLegalBack} />}
+          {appState === 'terms' && <TermsConditions onBack={handleLegalBack} />}
+          {appState === 'contact' && <ContactUs onBack={handleLegalBack} />}
+          {appState === 'about' && <About onBack={handleLegalBack} />}
+          
+          {appState === 'blog-list' && <BlogList onSelectArticle={handleSelectArticle} />}
+          {appState === 'blog-post' && selectedArticle && <BlogPost article={selectedArticle} onBack={handleLegalBack} />}
+          {appState === 'admin' && <AdminEditor onBack={handleLegalBack} />}
+
+          {appState === 'upload' && (
+             <div className="flex flex-col items-center animate-fadeIn mt-6 sm:mt-12">
+               <div className="text-center mb-8 sm:mb-10 px-4">
+                 <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-4 tracking-tight leading-tight">
+                   {t('heroTitle')} <br className="hidden sm:block" />
+                   <span className="text-indigo-500 block sm:inline">{t('heroSubtitle')}</span>
+                 </h2>
+                 <p className="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
+                   {t('heroDesc')}
+                 </p>
+               </div>
+               <UploadZone onImageSelected={handleImageSelected} />
+               
+               <AdSense slot={AD_CONFIG.SLOTS.HOME_HERO} className="mt-8 sm:mt-12" />
+             </div>
+          )}
+
+          {appState === 'cropping' && tempImage && (
+            <ImageCropper 
+              imageSrc={tempImage}
+              onCropComplete={handleCropComplete}
+              onCancel={handleCropCancel}
             />
-          </div>
-        )}
+          )}
 
-        {appState === 'result' && originalImage && currentImage && (
-          <div className="animate-fadeIn space-y-8 sm:space-y-12">
-            
-            <ResultDisplay 
-              originalImage={originalImage}
-              generatedImage={currentImage}
-              variations={variations}
-              onSelectVariation={handleVariationSelect}
-              onGenerateMore={handleGenerateMore}
-              onUndo={handleUndo}
-              onRedo={handleRedo}
-              canUndo={historyIndex > 0}
-              canRedo={historyIndex < imageHistory.length - 1}
-              chatMessages={chatMessages}
-              onSendMessage={handleEditMessage}
-              isProcessing={isGenerating}
-            />
+          {appState === 'style-selection' && (
+            <div className="space-y-6 sm:space-y-8 animate-fadeIn relative">
+              <div className="sticky top-16 z-40 bg-slate-900/95 backdrop-blur-xl border-b border-slate-800/80 py-4 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 shadow-lg transition-all flex flex-col sm:flex-row justify-between items-center gap-4">
+                 <div className="flex items-center gap-4 w-full sm:w-auto">
+                   <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden border border-slate-600 shrink-0 relative group">
+                      <img src={originalImage || ''} className="w-full h-full object-cover" alt="Source" />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity" />
+                   </div>
+                   <div>
+                     <h3 className="text-base sm:text-lg font-medium text-white">{t('sourceImage')}</h3>
+                     <button onClick={() => setAppState('upload')} className="text-sm text-indigo-400 hover:text-indigo-300 underline underline-offset-2">{t('changePhoto')}</button>
+                   </div>
+                 </div>
+                 
+                 <Button 
+                   onClick={handleGenerate} 
+                   disabled={!selectedStyleId} 
+                   isLoading={isGenerating}
+                   className="w-full sm:w-auto min-w-[160px] shadow-indigo-500/20 shadow-lg"
+                 >
+                   <Wand2 className="w-4 h-4 mr-2 rtl:ml-2 rtl:mr-0" />
+                   {t('generateHeadshot')}
+                 </Button>
+              </div>
+              
+              <div className="pt-2">
+                  <AdSense slot={AD_CONFIG.SLOTS.STYLE_SELECTION_TOP} />
+              </div>
 
-            <AdSense slot="3456789012" />
+              <StyleSelector 
+                selectedStyleId={selectedStyleId} 
+                onSelectStyle={handleStyleSelected} 
+                originalImage={originalImage || ''}
+              />
+            </div>
+          )}
 
-          </div>
-        )}
-      </main>
+          {appState === 'result' && originalImage && currentImage && (
+            <div className="animate-fadeIn space-y-8 sm:space-y-12">
+              
+              <ResultDisplay 
+                originalImage={originalImage}
+                generatedImage={currentImage}
+                onUndo={handleUndo}
+                onRedo={handleRedo}
+                canUndo={historyIndex > 0}
+                canRedo={historyIndex < imageHistory.length - 1}
+                chatMessages={chatMessages}
+                onSendMessage={handleEditMessage}
+                isProcessing={isGenerating}
+                onSelectArticle={handleSelectArticle}
+              />
 
-      <Footer onNavigate={handleLegalNavigation} />
-    </div>
+              <AdSense slot={AD_CONFIG.SLOTS.RESULT_BOTTOM} />
+
+            </div>
+          )}
+        </main>
+
+        <Footer onNavigate={handleLegalNavigation} />
+      </div>
+    </AuthProvider>
   );
 };
 

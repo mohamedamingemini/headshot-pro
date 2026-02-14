@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Sparkles, Loader2, Sun, Moon, Flame, Snowflake, Zap, Feather, Smile, Eye, Image as ImageIcon, Palette, PaintBucket, PlusCircle, ScanFace, Stars, Activity, Triangle, Lightbulb, MoveHorizontal } from 'lucide-react';
+import { Send, Sparkles, Loader2, Sun, Moon, Flame, Snowflake, Zap, Feather, Smile, Eye, Image as ImageIcon, Palette, PaintBucket, PlusCircle, ScanFace, Stars, Activity, Triangle, Lightbulb, MoveHorizontal, Film, Aperture } from 'lucide-react';
 import { ChatMessage } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
 
@@ -26,6 +26,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onSendMessage, messages, 
   const { t } = useLanguage();
 
   const quickActions: QuickAction[] = [
+    { labelKey: 'qaCinematic', prompt: 'Add cinematic lighting', icon: Film, successMessageKey: 'successEdit' },
+    { labelKey: 'qaSoftFocus', prompt: 'Apply a soft focus effect', icon: Aperture, successMessageKey: 'successEdit' },
     { labelKey: 'qaBrighter', prompt: 'Make the lighting brighter', icon: Sun, successMessageKey: 'successEdit' },
     { labelKey: 'qaDarker', prompt: 'Make the lighting darker', icon: Moon, successMessageKey: 'successEdit' },
     { labelKey: 'qaWarmer', prompt: 'Make the color tone warmer', icon: Flame, successMessageKey: 'successEdit' },
