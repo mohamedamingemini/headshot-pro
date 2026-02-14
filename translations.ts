@@ -1,8 +1,23 @@
+
 export const translations = {
   en: {
     // Header
     appName: "ProHeadshot AI",
     startOver: "Start Over",
+    login: "Log In",
+    logout: "Log Out",
+    profile: "Profile",
+    
+    // Auth
+    loginTitle: "Sign in to ProHeadshot AI",
+    loginSubtitle: "Save your generations and access more features.",
+    continueWithGoogle: "Continue with Google",
+    continueWithFacebook: "Continue with Facebook",
+    continueWithApple: "Continue with Apple",
+    errorLoginFailed: "Login failed. Please try again.",
+    errorAccountExists: "An account already exists with the same email address but different sign-in credentials.",
+    errorAuthNotConfigured: "Authentication is not configured in this environment.",
+    loginDisclaimer: "By continuing, you agree to our Terms of Service and Privacy Policy.",
     
     // Upload
     uploadTitle: "Upload your selfie",
@@ -27,15 +42,20 @@ export const translations = {
     // Style Selection
     sourceImage: "Source Image",
     changePhoto: "Change photo",
-    generateHeadshot: "Generate Headshot",
+    generateHeadshot: "Generate Headshots",
     chooseStyle: "Choose your style",
     hoverPreview: "Hover over a style to see a preview with your photo",
     preview: "Preview",
+    dailyLimitReached: "Daily limit of 3 reached. Please try again in {time}.",
     
     // Result
     original: "Original",
     advertisement: "Advertisement",
     generatedResult: "Generated Result",
+    variations: "Variations",
+    variationsDesc: "Select a variation to edit or download",
+    generateMore: "Generate More",
+    more: "More",
     share: "Share",
     save: "Save",
     copied: "Copied!",
@@ -71,6 +91,9 @@ export const translations = {
     qaEyeSparkle: "Eye Sparkle",
     qaFixEyes: "Fix Eyes",
     qaJawline: "Jawline",
+    qaSharpen: "Sharpen Details",
+    qaGlow: "Subtle Glow",
+    qaSymmetry: "Symmetry",
     qaEyeColor: "Eye Color",
     qaNewBkg: "New Bkg",
     qaBgColor: "BG Color",
@@ -78,7 +101,7 @@ export const translations = {
     qaFaceShape: "Face Shape",
     
     // Status
-    processing: "Processing...",
+    processing: "Generating variations...",
     errorGeneric: "Failed to generate headshot. Please try again.",
     successEdit: "I've applied those changes for you.",
     errorEdit: "Sorry, I couldn't process that edit.",
@@ -86,12 +109,31 @@ export const translations = {
     // Styles
     styleCorporate: "Corporate Grey",
     styleTech: "Modern Tech",
+
+    // Legal
+    privacyPolicy: "Privacy Policy",
+    termsConditions: "Terms & Conditions",
+    back: "Back"
   },
   ar: {
     // Header
     appName: "ProHeadshot AI",
     startOver: "البدء من جديد",
+    login: "تسجيل الدخول",
+    logout: "تسجيل الخروج",
+    profile: "الملف الشخصي",
     
+    // Auth
+    loginTitle: "تسجيل الدخول إلى ProHeadshot AI",
+    loginSubtitle: "احفظ صورك واحصل على ميزات أكثر.",
+    continueWithGoogle: "الاستمرار باستخدام Google",
+    continueWithFacebook: "الاستمرار باستخدام Facebook",
+    continueWithApple: "الاستمرار باستخدام Apple",
+    errorLoginFailed: "فشل تسجيل الدخول. حاول مرة أخرى.",
+    errorAccountExists: "يوجد حساب بالفعل بنفس البريد الإلكتروني ولكن ببيانات تسجيل دخول مختلفة.",
+    errorAuthNotConfigured: "المصادقة غير مهيأة في هذه البيئة.",
+    loginDisclaimer: "بالمتابعة، أنت توافق على شروط الخدمة وسياسة الخصوصية.",
+
     // Upload
     uploadTitle: "ارفع صورتك الشخصية",
     uploadSubtitle: "اختر صورة واضحة وتواجه الكاميرا. سنقوم بتحويل الإضاءة والخلفية والأسلوب.",
@@ -115,15 +157,20 @@ export const translations = {
     // Style Selection
     sourceImage: "الصورة الأصلية",
     changePhoto: "تغيير الصورة",
-    generateHeadshot: "إنشاء الصورة",
+    generateHeadshot: "إنشاء الصور",
     chooseStyle: "اختر النمط المفضل",
     hoverPreview: "مرر فوق النمط لرؤية معاينة مع صورتك",
     preview: "معاينة",
+    dailyLimitReached: "وصلت للحد اليومي (3). حاول مرة أخرى خلال {time}.",
     
     // Result
     original: "الأصلية",
     advertisement: "إعلان",
     generatedResult: "النتيجة المولدة",
+    variations: "تنوعات",
+    variationsDesc: "اختر نسخة للتعديل أو التحميل",
+    generateMore: "إنشاء المزيد",
+    more: "المزيد",
     share: "مشاركة",
     save: "حفظ",
     copied: "تم النسخ!",
@@ -159,6 +206,9 @@ export const translations = {
     qaEyeSparkle: "بريق العين",
     qaFixEyes: "إصلاح العين",
     qaJawline: "خط الفك",
+    qaSharpen: "توضيح التفاصيل",
+    qaGlow: "توهج خفيف",
+    qaSymmetry: "تنسيق الوجه",
     qaEyeColor: "لون العين",
     qaNewBkg: "خلفية جديدة",
     qaBgColor: "لون الخلفية",
@@ -166,9 +216,18 @@ export const translations = {
     qaFaceShape: "شكل الوجه",
     
     // Status
-    processing: "جاري المعالجة...",
+    processing: "جاري إنشاء التنوعات...",
     errorGeneric: "فشل إنشاء الصورة. يرجى المحاولة مرة أخرى.",
     successEdit: "لقد قمت بتطبيق تلك التغييرات لك.",
     errorEdit: "عذراً، لم أتمكن من معالجة هذا التعديل.",
+    
+    // Styles
+    styleCorporate: "Corporate Grey",
+    styleTech: "Modern Tech",
+
+    // Legal
+    privacyPolicy: "سياسة الخصوصية",
+    termsConditions: "الشروط والأحكام",
+    back: "عودة"
   }
 };

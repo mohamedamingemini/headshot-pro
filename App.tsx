@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import Header from './components/Header';
 import UploadZone from './components/UploadZone';
@@ -6,23 +7,36 @@ import ResultDisplay from './components/ResultDisplay';
 import Button from './components/Button';
 import AdSense from './components/AdSense';
 import ImageCropper from './components/ImageCropper';
-import { generateHeadshot, editHeadshot } from './services/geminiService';
+import Footer from './components/Footer';
+import PrivacyPolicy from './components/PrivacyPolicy';
+import TermsConditions from './components/TermsConditions';
+import { generateHeadshotVariations, editHeadshot } from './services/geminiService';
+import { checkDailyLimit, incrementDailyUsage } from './services/usageService';
 import { AppState, ChatMessage } from './types';
 import { HEADSHOT_STYLES } from './constants';
 import { Wand2, AlertCircle } from 'lucide-react';
 import { useLanguage } from './contexts/LanguageContext';
+import { useAuth } from './contexts/AuthContext';
 
 const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>('upload');
+  // State to remember where to go back to from legal pages
+  const [previousState, setPreviousState] = useState<AppState>('upload');
+  
   // tempImage holds the raw uploaded image before cropping
   const [tempImage, setTempImage] = useState<string | null>(null);
   // originalImage holds the final cropped/confirmed image to be used for generation
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [currentImage, setCurrentImage] = useState<string | null>(null);
+  
+  // Variations state
+  const [variations, setVariations] = useState<string[]>([]);
+
   const [selectedStyleId, setSelectedStyleId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { t, language } = useLanguage();
+  const { user } = useAuth();
   
   // History state
   const [imageHistory, setImageHistory] = useState<string[]>([]);
@@ -55,6 +69,13 @@ const App: React.FC = () => {
   const handleGenerate = async () => {
     if (!originalImage || !selectedStyleId) return;
 
+    // Check Daily Limit with User ID
+    const limitCheck = checkDailyLimit(user?.uid);
+    if (!limitCheck.allowed) {
+      setError(t('dailyLimitReached').replace('{time}', limitCheck.timeRemainingStr || '24h'));
+      return;
+    }
+
     const style = HEADSHOT_STYLES.find(s => s.id === selectedStyleId);
     if (!style) return;
 
@@ -62,11 +83,17 @@ const App: React.FC = () => {
     setError(null);
 
     try {
-      const resultImage = await generateHeadshot(originalImage, style.promptModifier);
+      // Generate 4 variations instead of just one
+      const generatedResults = await generateHeadshotVariations(originalImage, style.promptModifier, 4);
       
-      setCurrentImage(resultImage);
-      // Initialize history
-      setImageHistory([resultImage]);
+      // If successful, increment usage count with User ID
+      incrementDailyUsage(user?.uid);
+
+      setVariations(generatedResults);
+      setCurrentImage(generatedResults[0]); // Select the first one by default
+      
+      // Initialize history with the first one
+      setImageHistory([generatedResults[0]]);
       setHistoryIndex(0);
       
       setAppState('result');
@@ -78,8 +105,8 @@ const App: React.FC = () => {
           id: 'init',
           role: 'assistant',
           text: language === 'ar' 
-            ? `ها هي صورة ${styleName}! أخبرني إذا كنت تريد إجراء أي تعديلات، مثل "اجعل الخلفية أفتح" أو "أضف ابتسامة".`
-            : `Here is your ${styleName} headshot! Let me know if you want to make any edits, like "Make the background lighter" or "Add a smile".`,
+            ? `ها هي صور ${styleName}! لقد قمت بإنشاء عدة تنويعات لك. اختر النسخة التي تفضلها، وأخبرني إذا كنت تريد إجراء أي تعديلات.`
+            : `Here are your ${styleName} headshots! I've generated a few variations. Select the one you like best, and let me know if you want to make any edits.`,
           timestamp: Date.now()
         }
       ]);
@@ -89,6 +116,42 @@ const App: React.FC = () => {
     } finally {
       setIsGenerating(false);
     }
+  };
+  
+  const handleGenerateMore = async () => {
+    if (!originalImage || !selectedStyleId) return;
+
+    // Check Daily Limit for "Generate More" as well
+    const limitCheck = checkDailyLimit(user?.uid);
+    if (!limitCheck.allowed) {
+      setError(t('dailyLimitReached').replace('{time}', limitCheck.timeRemainingStr || '24h'));
+      return;
+    }
+
+    const style = HEADSHOT_STYLES.find(s => s.id === selectedStyleId);
+    if (!style) return;
+
+    setIsGenerating(true);
+    
+    try {
+      // Generate 4 more variations
+      const newVariations = await generateHeadshotVariations(originalImage, style.promptModifier, 4);
+      
+      // If successful, increment usage count with User ID
+      incrementDailyUsage(user?.uid);
+
+      setVariations(prev => [...prev, ...newVariations]);
+    } catch (err: any) {
+      setError(err.message || t('errorGeneric'));
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleVariationSelect = (image: string) => {
+    setCurrentImage(image);
+    setImageHistory([image]);
+    setHistoryIndex(0);
   };
 
   const handleEditMessage = async (text: string, customSuccessMessage?: string) => {
@@ -105,10 +168,8 @@ const App: React.FC = () => {
     setIsGenerating(true);
     
     try {
-      // We edit the CURRENT image
       const newImage = await editHeadshot(currentImage, text);
       
-      // Update History: remove future history if we edited from the middle
       const newHistory = imageHistory.slice(0, historyIndex + 1);
       newHistory.push(newImage);
       
@@ -159,6 +220,7 @@ const App: React.FC = () => {
     setOriginalImage(null);
     setTempImage(null);
     setCurrentImage(null);
+    setVariations([]);
     setSelectedStyleId(null);
     setChatMessages([]);
     setImageHistory([]);
@@ -166,11 +228,23 @@ const App: React.FC = () => {
     setError(null);
   };
 
-  return (
-    <div className="min-h-screen bg-slate-900 text-slate-200 pb-12">
-      <Header onReset={handleReset} canReset={appState !== 'upload'} />
+  const handleLegalNavigation = (page: 'privacy' | 'terms') => {
+    if (appState !== 'privacy' && appState !== 'terms') {
+      setPreviousState(appState);
+    }
+    setAppState(page);
+    window.scrollTo(0, 0);
+  };
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8">
+  const handleLegalBack = () => {
+    setAppState(previousState);
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-900 text-slate-200 flex flex-col">
+      <Header onReset={handleReset} canReset={appState !== 'upload' && appState !== 'privacy' && appState !== 'terms'} />
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8 w-full flex-grow pb-12">
         
         {error && (
           <div className="mb-6 p-4 bg-red-900/50 border border-red-700 rounded-xl flex items-center gap-3 text-red-200 animate-fadeIn">
@@ -178,6 +252,9 @@ const App: React.FC = () => {
             <p>{error}</p>
           </div>
         )}
+
+        {appState === 'privacy' && <PrivacyPolicy onBack={handleLegalBack} />}
+        {appState === 'terms' && <TermsConditions onBack={handleLegalBack} />}
 
         {appState === 'upload' && (
            <div className="flex flex-col items-center animate-fadeIn mt-6 sm:mt-12">
@@ -192,7 +269,6 @@ const App: React.FC = () => {
              </div>
              <UploadZone onImageSelected={handleImageSelected} />
              
-             {/* Ad Placement 1: Below content on landing page */}
              <AdSense slot="1234567890" className="mt-8 sm:mt-12" />
            </div>
         )}
@@ -229,7 +305,6 @@ const App: React.FC = () => {
                </Button>
             </div>
             
-            {/* Ad Placement 2: High visibility banner before action */}
             <AdSense slot="2345678901" />
 
             <StyleSelector 
@@ -246,6 +321,9 @@ const App: React.FC = () => {
             <ResultDisplay 
               originalImage={originalImage}
               generatedImage={currentImage}
+              variations={variations}
+              onSelectVariation={handleVariationSelect}
+              onGenerateMore={handleGenerateMore}
               onUndo={handleUndo}
               onRedo={handleRedo}
               canUndo={historyIndex > 0}
@@ -255,12 +333,13 @@ const App: React.FC = () => {
               isProcessing={isGenerating}
             />
 
-            {/* Ad Placement 3: Moved below the consolidated ResultDisplay (which now includes Chat) */}
             <AdSense slot="3456789012" />
 
           </div>
         )}
       </main>
+
+      <Footer onNavigate={handleLegalNavigation} />
     </div>
   );
 };

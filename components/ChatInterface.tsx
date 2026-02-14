@@ -1,5 +1,6 @@
+
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Sparkles, Loader2, Sun, Moon, Flame, Snowflake, Zap, Feather, Smile, Eye, Image as ImageIcon, Palette, PaintBucket, PlusCircle, ScanFace, Stars, Activity } from 'lucide-react';
+import { Send, Sparkles, Loader2, Sun, Moon, Flame, Snowflake, Zap, Feather, Smile, Eye, Image as ImageIcon, Palette, PaintBucket, PlusCircle, ScanFace, Stars, Activity, Triangle, Lightbulb, MoveHorizontal } from 'lucide-react';
 import { ChatMessage } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
 
@@ -31,6 +32,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onSendMessage, messages, 
     { labelKey: 'qaCooler', prompt: 'Make the color tone cooler', icon: Snowflake, successMessageKey: 'successEdit' },
     { labelKey: 'qaContrast', prompt: 'Increase contrast', icon: Zap, successMessageKey: 'successEdit' },
     { labelKey: 'qaSoften', prompt: 'Soften the details gently', icon: Feather, successMessageKey: 'successEdit' },
+    { labelKey: 'qaSharpen', prompt: 'Sharpen details and enhance image clarity', icon: Triangle, successMessageKey: 'successEdit' },
+    { labelKey: 'qaGlow', prompt: 'Add a soft, subtle glow to the skin', icon: Lightbulb, successMessageKey: 'successEdit' },
+    { labelKey: 'qaSymmetry', prompt: 'Subtly adjust the facial symmetry in the generated headshot for a more balanced appearance', icon: MoveHorizontal, successMessageKey: 'successEdit' },
     { labelKey: 'qaSmile', prompt: 'Add a natural smile', icon: Smile, successMessageKey: 'successEdit' },
     { labelKey: 'qaWhitenTeeth', prompt: 'Whiten teeth naturally', icon: Sparkles, successMessageKey: 'successEdit' },
     { labelKey: 'qaEyeSparkle', prompt: 'Enhance eye sparkle and catchlights', icon: Stars, successMessageKey: 'successEdit' },
@@ -44,7 +48,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onSendMessage, messages, 
   ];
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   useEffect(() => {
@@ -82,7 +88,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onSendMessage, messages, 
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-4 scroll-smooth">
-        {/* Welcome Message */}
+        {/* Welcome Message - only shows if no messages exist */}
         {messages.length === 0 && (
           <div className="text-center text-slate-400 my-auto pt-10 px-4">
             <p className="font-medium text-sm sm:text-base">{t('chatWelcome1')}</p>
@@ -93,17 +99,17 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onSendMessage, messages, 
         {messages.map((msg) => (
           <div 
             key={msg.id} 
-            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-fadeIn`}
           >
             <div 
               className={`
-                max-w-[90%] sm:max-w-[80%] rounded-2xl px-3 py-2 sm:px-4 sm:py-3 text-sm
+                max-w-[90%] sm:max-w-[80%] rounded-2xl px-3 py-2 sm:px-4 sm:py-3 text-sm shadow-md
                 ${msg.role === 'user' 
                   ? 'bg-indigo-600 text-white rounded-br-none rtl:rounded-bl-none rtl:rounded-br-2xl' 
                   : 'bg-slate-700 text-slate-200 rounded-bl-none rtl:rounded-br-none rtl:rounded-bl-2xl'}
               `}
             >
-              {msg.text && <p className="mb-2 leading-relaxed">{msg.text}</p>}
+              {msg.text && <p className="leading-relaxed whitespace-pre-wrap">{msg.text}</p>}
               {msg.image && (
                 <div className="mt-2 rounded-lg overflow-hidden border border-white/10">
                   <img src={msg.image} alt="Edit result" className="w-full h-auto" />
@@ -114,14 +120,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onSendMessage, messages, 
         ))}
         
         {isProcessing && (
-           <div className="flex justify-start">
-             <div className="bg-slate-700 text-slate-200 rounded-2xl rounded-bl-none rtl:rounded-br-none rtl:rounded-bl-2xl px-4 py-3 text-sm flex items-center gap-2">
+           <div className="flex justify-start animate-fadeIn">
+             <div className="bg-slate-700 text-slate-200 rounded-2xl rounded-bl-none rtl:rounded-br-none rtl:rounded-bl-2xl px-4 py-3 text-sm flex items-center gap-2 shadow-md">
                <Loader2 className="w-4 h-4 animate-spin" />
                {t('applyingEdits')}
              </div>
            </div>
         )}
-        <div ref={messagesEndRef} />
+        <div ref={messagesEndRef} className="h-1" />
       </div>
 
       {/* Quick Actions Panel */}
@@ -156,7 +162,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onSendMessage, messages, 
           <button 
             type="submit"
             disabled={!inputValue.trim() || isProcessing}
-            className="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 disabled:opacity-50 disabled:cursor-not-allowed text-white p-3 rounded-xl transition-colors shrink-0"
+            className="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 disabled:opacity-50 disabled:cursor-not-allowed text-white p-3 rounded-xl transition-colors shrink-0 shadow-sm"
           >
             <Send className="w-5 h-5 rtl:-scale-x-100" />
           </button>

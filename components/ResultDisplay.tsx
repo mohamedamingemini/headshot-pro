@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Download, Layers, Palette, Undo, Redo, Share2, Check } from 'lucide-react';
+
+import React, { useState, useEffect } from 'react';
+import { Download, Layers, Palette, Undo, Redo, Share2, Check, LayoutGrid, Plus, Loader2 } from 'lucide-react';
 import AdSense from './AdSense';
 import { useLanguage } from '../contexts/LanguageContext';
 import ChatInterface from './ChatInterface';
@@ -8,6 +9,9 @@ import { ChatMessage } from '../types';
 interface ResultDisplayProps {
   originalImage: string;
   generatedImage: string;
+  variations?: string[]; // New prop for variations
+  onSelectVariation?: (image: string) => void; // New prop to switch main image
+  onGenerateMore?: () => void;
   onUndo?: () => void;
   onRedo?: () => void;
   canUndo?: boolean;
@@ -21,6 +25,9 @@ interface ResultDisplayProps {
 const ResultDisplay: React.FC<ResultDisplayProps> = ({ 
   originalImage, 
   generatedImage,
+  variations = [],
+  onSelectVariation,
+  onGenerateMore,
   onUndo,
   onRedo,
   canUndo = false,
@@ -108,8 +115,51 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 w-full max-w-5xl mx-auto">
-      {/* Original Image (Left Col Desktop, Bottom Col Mobile) */}
+      {/* Original Image & Variations (Left Col Desktop, Bottom Col Mobile) */}
       <div className="flex flex-col gap-3 order-2 md:order-1">
+        
+        {/* Variations Selector */}
+        {variations.length > 0 && (
+          <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700 mb-4 animate-fadeIn">
+             <div className="flex items-center gap-2 mb-3">
+               <LayoutGrid className="w-4 h-4 text-indigo-400" />
+               <span className="text-sm font-medium text-slate-200">{t('variations')}</span>
+             </div>
+             <div className="grid grid-cols-4 gap-2">
+               {variations.map((src, index) => (
+                 <button
+                   key={index}
+                   onClick={() => onSelectVariation && onSelectVariation(src)}
+                   className={`
+                     relative aspect-square rounded-lg overflow-hidden border-2 transition-all
+                     ${generatedImage === src ? 'border-indigo-500 ring-2 ring-indigo-500/20' : 'border-transparent hover:border-slate-500'}
+                   `}
+                 >
+                   <img src={src} alt={`Variation ${index + 1}`} className="w-full h-full object-cover" />
+                 </button>
+               ))}
+               
+               {/* Generate More Button */}
+               <button 
+                  onClick={onGenerateMore}
+                  disabled={isProcessing}
+                  className="aspect-square rounded-lg border-2 border-dashed border-slate-600 hover:border-indigo-500 hover:bg-slate-800/50 flex flex-col items-center justify-center text-slate-400 hover:text-indigo-400 transition-all gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title={t('generateMore')}
+               >
+                  {isProcessing ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <>
+                      <Plus className="w-5 h-5" />
+                      <span className="text-[10px] font-medium">{t('more')}</span>
+                    </>
+                  )}
+               </button>
+             </div>
+             <p className="text-[10px] text-slate-400 mt-2 text-center">{t('variationsDesc')}</p>
+          </div>
+        )}
+
         <h3 className="text-slate-400 font-medium text-sm uppercase tracking-wider hidden md:block">{t('original')}</h3>
         <div className="relative aspect-square rounded-2xl overflow-hidden bg-slate-800 border border-slate-700 shadow-inner">
           <img 

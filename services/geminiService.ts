@@ -1,24 +1,51 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 
-const apiKey = process.env.API_KEY;
 // Using the specified Nano banana powered model
 const MODEL_NAME = 'gemini-2.5-flash-image';
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const retryOperation = async <T>(
+  operation: () => Promise<T>,
+  retries: number = 3,
+  baseDelay: number = 2000
+): Promise<T> => {
+  try {
+    return await operation();
+  } catch (error: any) {
+    // Check for rate limit error (429) or Resource Exhausted
+    const isRateLimit = 
+      error?.status === 429 || 
+      error?.code === 429 || 
+      error?.message?.includes('429') || 
+      error?.message?.includes('quota') ||
+      error?.status === 'RESOURCE_EXHAUSTED';
+
+    if (retries > 0 && isRateLimit) {
+      console.warn(`Rate limit hit. Retrying in ${baseDelay}ms... (${retries} retries left)`);
+      await wait(baseDelay);
+      // Exponential backoff
+      return retryOperation(operation, retries - 1, baseDelay * 2);
+    }
+    throw error;
+  }
+};
 
 export const generateHeadshot = async (
   originalImageBase64: string,
   stylePrompt: string
 ): Promise<string> => {
-  if (!apiKey) {
+  if (!process.env.API_KEY) {
     throw new Error("API Key is missing. Please check your environment variables.");
   }
 
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
   // Clean the base64 string if it contains the data URL prefix
   const cleanBase64 = originalImageBase64.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, '');
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await retryOperation<GenerateContentResponse>(() => ai.models.generateContent({
       model: MODEL_NAME,
       contents: {
         parts: [
@@ -29,16 +56,16 @@ export const generateHeadshot = async (
             },
           },
           {
-            text: `Transform this image into a professional headshot. ${stylePrompt}. High resolution, photorealistic, 4k. Maintain the person's identity but improve lighting and background.`
+            text: `Transform this image into a professional headshot. ${stylePrompt}. High resolution, photorealistic, 4k. Ensure balanced facial symmetry and correct lens distortion. Maintain the person's identity but improve lighting and background.`
           },
         ],
       },
       // Note: responseMimeType and responseSchema are NOT supported for this model
-    });
+    }));
 
     let generatedImageBase64 = '';
 
-    if (response.candidates && response.candidates[0].content.parts) {
+    if (response.candidates?.[0]?.content?.parts) {
       for (const part of response.candidates[0].content.parts) {
         if (part.inlineData && part.inlineData.data) {
           generatedImageBase64 = part.inlineData.data;
@@ -59,19 +86,56 @@ export const generateHeadshot = async (
   }
 };
 
+export const generateHeadshotVariations = async (
+  originalImageBase64: string,
+  stylePrompt: string,
+  count: number = 4
+): Promise<string[]> => {
+  // Generate 'count' variations
+  // Stagger requests to avoid hitting instantaneous rate limits (burst quota)
+  const promises = Array(count).fill(0).map(async (_, index) => {
+    // Delay subsequent requests slightly (e.g., 0ms, 1200ms, 2400ms, 3600ms)
+    if (index > 0) await wait(index * 1200);
+    return generateHeadshot(originalImageBase64, stylePrompt);
+  });
+  
+  // Wait for all to finish, but handle individual failures gracefully so we return at least some images
+  const results = await Promise.allSettled(promises);
+  
+  const images: string[] = [];
+  results.forEach(result => {
+    if (result.status === 'fulfilled') {
+      images.push(result.value);
+    } else {
+      console.error("One variation failed:", result.reason);
+    }
+  });
+
+  if (images.length === 0) {
+    // Check if the failure was due to quota
+    const firstError = (results.find(r => r.status === 'rejected') as PromiseRejectedResult)?.reason;
+    if (firstError?.status === 429 || firstError?.message?.includes('429') || firstError?.message?.includes('quota')) {
+       throw new Error("System is experiencing high traffic. Please try again in a few moments.");
+    }
+    throw new Error("Failed to generate any variations.");
+  }
+
+  return images;
+};
+
 export const editHeadshot = async (
   currentImageBase64: string,
   editPrompt: string
 ): Promise<string> => {
-  if (!apiKey) {
+  if (!process.env.API_KEY) {
     throw new Error("API Key is missing.");
   }
 
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const cleanBase64 = currentImageBase64.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, '');
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await retryOperation<GenerateContentResponse>(() => ai.models.generateContent({
       model: MODEL_NAME,
       contents: {
         parts: [
@@ -86,11 +150,11 @@ export const editHeadshot = async (
           },
         ],
       },
-    });
+    }));
 
     let generatedImageBase64 = '';
 
-    if (response.candidates && response.candidates[0].content.parts) {
+    if (response.candidates?.[0]?.content?.parts) {
       for (const part of response.candidates[0].content.parts) {
         if (part.inlineData && part.inlineData.data) {
           generatedImageBase64 = part.inlineData.data;

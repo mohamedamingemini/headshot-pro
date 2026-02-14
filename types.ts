@@ -1,3 +1,4 @@
+
 export interface HeadshotStyle {
   id: string;
   name: string;
@@ -16,4 +17,4 @@ export interface ChatMessage {
   timestamp: number;
 }
 
-export type AppState = 'upload' | 'cropping' | 'style-selection' | 'generating' | 'result';
+export type AppState = 'upload' | 'cropping' | 'style-selection' | 'generating' | 'result' | 'privacy' | 'terms';
