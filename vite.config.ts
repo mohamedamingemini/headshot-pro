@@ -33,9 +33,9 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     define: {
-      'process.env.GEMINI_API_KEY': JSON.stringify("AIzaSyBUkw46ldA6gxsVyfF6F9f1ATLi1D8B3ZE"),
-      'process.env.MY_NEW_API_KEY': JSON.stringify("AIzaSyBUkw46ldA6gxsVyfF6F9f1ATLi1D8B3ZE"),
-      'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify("AIzaSyBUkw46ldA6gxsVyfF6F9f1ATLi1D8B3ZE"),
+      'process.env.GEMINI_API_KEY': JSON.stringify(process.env.GEMINI_API_KEY),
+      'process.env.API_KEY': JSON.stringify(process.env.API_KEY),
+      'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify(process.env.GEMINI_API_KEY),
     },
     build: {
       outDir: 'dist',

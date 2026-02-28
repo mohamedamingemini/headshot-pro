@@ -4,6 +4,7 @@
 declare namespace NodeJS {
   interface ProcessEnv {
     GEMINI_API_KEY: string;
+    API_KEY: string;
     VITE_GEMINI_API_KEY: string;
     VITE_FIREBASE_API_KEY: string;
     VITE_FIREBASE_AUTH_DOMAIN: string;
@@ -29,4 +30,11 @@ interface ImportMetaEnv {
 
 interface ImportMeta {
   readonly env: ImportMetaEnv
+}
+
+interface Window {
+  aistudio?: {
+    hasSelectedApiKey: () => Promise<boolean>;
+    openSelectKey: () => Promise<void>;
+  }
 }

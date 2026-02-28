@@ -520,6 +520,28 @@ const App: React.FC = () => {
                    </button>
                 </div>
               )}
+              
+              {(error.includes('leaked') || error.includes('API Key')) && (
+                <div className="flex gap-2 w-full sm:w-auto">
+                   <button 
+                     onClick={async () => {
+                       if (window.aistudio) {
+                         try {
+                           await window.aistudio.openSelectKey();
+                           window.location.reload();
+                         } catch (e) {
+                           console.error("Failed to select key", e);
+                         }
+                       } else {
+                         alert("API Key selection is not available in this environment.");
+                       }
+                     }}
+                     className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors shadow-lg shadow-indigo-500/20 whitespace-nowrap"
+                   >
+                     Select New API Key
+                   </button>
+                </div>
+              )}
             </div>
           )}
 

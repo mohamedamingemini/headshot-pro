@@ -54,15 +54,35 @@ const retryOperation = async <T>(
   }
 };
 
+const getApiKey = async (): Promise<string> => {
+  // Try environment variables first (for build time or if already available)
+  let apiKey = process.env.API_KEY || import.meta.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+  
+  if (!apiKey) {
+    try {
+      // Fetch from server if not available in env
+      const response = await fetch('/api/config');
+      if (response.ok) {
+        const data = await response.json();
+        apiKey = data.geminiApiKey;
+      }
+    } catch (e) {
+      console.warn("Failed to fetch API key from server config", e);
+    }
+  }
+
+  if (!apiKey) {
+    throw new Error("API Key is missing. Please select a valid API key.");
+  }
+  return apiKey;
+};
+
 export const generateHeadshot = async (
   originalImageBase64: string,
   stylePrompt: string
 ): Promise<string> => {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || process.env.MY_NEW_API_KEY || process.env.GEMINI_API_KEY;
+  const apiKey = await getApiKey();
   console.log("API Key loaded in generateHeadshot:", apiKey ? `${apiKey.substring(0, 5)}...` : "undefined");
-  if (!apiKey) {
-    throw new Error("API Key is missing. If you are on Vercel, please add 'GEMINI_API_KEY' to your Project Settings > Environment Variables.");
-  }
 
   const ai = new GoogleGenAI({ apiKey });
   const mimeType = getMimeType(originalImageBase64);
@@ -156,11 +176,8 @@ export const editHeadshot = async (
   currentImageBase64: string,
   editPrompt: string
 ): Promise<string> => {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || process.env.MY_NEW_API_KEY || process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error("API Key is missing.");
-  }
-
+  const apiKey = await getApiKey();
+  
   const ai = new GoogleGenAI({ apiKey });
   const mimeType = getMimeType(currentImageBase64);
   const cleanBase64 = currentImageBase64.replace(/^data:image\/(png|jpeg|jpg|webp|image\/webp);base64,/, '');
@@ -215,11 +232,10 @@ export const editHeadshot = async (
 export const generateArticleTags = async (
   content: string
 ): Promise<string[]> => {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || process.env.MY_NEW_API_KEY || process.env.GEMINI_API_KEY;
-  if (!apiKey) return [];
-  const ai = new GoogleGenAI({ apiKey });
-
   try {
+    const apiKey = await getApiKey();
+    const ai = new GoogleGenAI({ apiKey });
+
     const response = await retryOperation<GenerateContentResponse>(() => ai.models.generateContent({
       model: TEXT_MODEL_NAME,
       contents: `Generate 5 SEO tags for this article: ${content.substring(0, 1000)}`,
@@ -234,11 +250,8 @@ export const generateArticleTags = async (
 };
 
 export const parseCV = async (cvText: string): Promise<PortfolioData> => {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || process.env.MY_NEW_API_KEY || process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error("API Key is missing.");
-  }
-
+  const apiKey = await getApiKey();
+  
   const ai = new GoogleGenAI({ apiKey });
 
   const schema = {
