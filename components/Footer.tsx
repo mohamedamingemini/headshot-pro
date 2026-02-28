@@ -3,7 +3,7 @@ import React from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface FooterProps {
-  onNavigate: (page: 'privacy' | 'terms' | 'contact' | 'about' | 'blog-list' | 'admin') => void;
+  onNavigate: (page: 'privacy' | 'terms' | 'contact' | 'about' | 'blog-list' | 'admin' | 'portfolio-view') => void;
 }
 
 const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
@@ -28,6 +28,9 @@ const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           <div className="col-span-1">
              <h3 className="text-white font-semibold mb-4 text-sm uppercase tracking-wider text-opacity-80">Company</h3>
              <ul className="space-y-3">
+               <li>
+                  <button onClick={() => onNavigate('portfolio-view')} className="text-slate-400 hover:text-white text-sm transition-colors">Portfolio</button>
+               </li>
                <li>
                   <button onClick={() => onNavigate('blog-list')} className="text-slate-400 hover:text-white text-sm transition-colors">{t('blogTitle')}</button>
                </li>

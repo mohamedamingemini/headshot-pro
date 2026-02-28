@@ -10,9 +10,10 @@ interface HeaderProps {
   refreshKey?: number; // Prop to force re-render when usage changes
   onOpenCredits: () => void;
   onNavigateBlog: () => void;
+  onNavigatePortfolio: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onReset, canReset, refreshKey, onOpenCredits, onNavigateBlog }) => {
+const Header: React.FC<HeaderProps> = ({ onReset, canReset, refreshKey, onOpenCredits, onNavigateBlog, onNavigatePortfolio }) => {
   const { language, setLanguage, t } = useLanguage();
   const [credits, setCredits] = useState(3);
 
@@ -46,6 +47,15 @@ const Header: React.FC<HeaderProps> = ({ onReset, canReset, refreshKey, onOpenCr
           
           <div className="flex items-center gap-3 sm:gap-4">
             
+            {/* Portfolio Link - Desktop */}
+            <button 
+              onClick={onNavigatePortfolio}
+              className="flex items-center gap-2 text-sm font-medium text-slate-300 hover:text-white transition-colors hover:bg-slate-800 px-3 py-1.5 rounded-lg"
+            >
+               <BookOpen className="w-4 h-4" />
+               <span className="hidden sm:inline">Portfolio</span>
+            </button>
+
             {/* Blog Link - Desktop */}
             <button 
               onClick={onNavigateBlog}

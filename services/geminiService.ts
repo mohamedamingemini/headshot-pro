@@ -58,11 +58,11 @@ export const generateHeadshot = async (
   originalImageBase64: string,
   stylePrompt: string
 ): Promise<string> => {
-  if (!process.env.API_KEY) {
-    throw new Error("API Key is missing. If you are on Vercel, please add 'API_KEY' to your Project Settings > Environment Variables.");
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error("API Key is missing. If you are on Vercel, please add 'GEMINI_API_KEY' to your Project Settings > Environment Variables.");
   }
 
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   const mimeType = getMimeType(originalImageBase64);
   const cleanBase64 = originalImageBase64.replace(/^data:image\/(png|jpeg|jpg|webp|image\/webp);base64,/, '');
 
@@ -154,11 +154,11 @@ export const editHeadshot = async (
   currentImageBase64: string,
   editPrompt: string
 ): Promise<string> => {
-  if (!process.env.API_KEY) {
+  if (!process.env.GEMINI_API_KEY) {
     throw new Error("API Key is missing.");
   }
 
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   const mimeType = getMimeType(currentImageBase64);
   const cleanBase64 = currentImageBase64.replace(/^data:image\/(png|jpeg|jpg|webp|image\/webp);base64,/, '');
 
@@ -212,8 +212,8 @@ export const editHeadshot = async (
 export const generateArticleTags = async (
   content: string
 ): Promise<string[]> => {
-  if (!process.env.API_KEY) return [];
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  if (!process.env.GEMINI_API_KEY) return [];
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
   try {
     const response = await retryOperation<GenerateContentResponse>(() => ai.models.generateContent({
@@ -230,11 +230,11 @@ export const generateArticleTags = async (
 };
 
 export const parseCV = async (cvText: string): Promise<PortfolioData> => {
-  if (!process.env.API_KEY) {
+  if (!process.env.GEMINI_API_KEY) {
     throw new Error("API Key is missing.");
   }
 
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
   const schema = {
     type: Type.OBJECT,

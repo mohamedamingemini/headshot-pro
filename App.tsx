@@ -36,7 +36,7 @@ const MOHAMED_PORTFOLIO: PortfolioData = {
   name: "Mohamed Farid Amin",
   title: "Operations Senior Supervisor",
   summary: "Results-driven Contact Centre Supervisor with over 10 years of experience in telecommunications, loyalty programs, and shopping mall operations. Proven expertise in optimizing processes, leading high-performing teams, and implementing data-driven solutions to enhance customer experience and operational efficiency. Expertise in SLA-driven environments and CRM automation tools like Zendesk, Genesys Cloud and Infobip.",
-  photo: "https://i.postimg.cc/ppKrWFP5/Personal-photo2.png", 
+  photo: "https://i.postimg.cc/QxyTqQPm/Personal-photo2.png", 
   skills: [
     { name: "Team Leadership", level: 98 },
     { name: "Operations Management", level: 96 },
@@ -132,7 +132,61 @@ const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>('upload');
   const [previousState, setPreviousState] = useState<AppState>('upload');
   
-  const [tempImage, setTempImage] = useState<string | null>(null);
+  // Handle direct links and back button
+  React.useEffect(() => {
+    const handleLocationChange = () => {
+      const path = window.location.pathname;
+      if (path === '/portfolio') {
+        setAppState('portfolio-view');
+      } else if (path === '/privacy') {
+        setAppState('privacy');
+      } else if (path === '/terms') {
+        setAppState('terms');
+      } else if (path === '/contact') {
+        setAppState('contact');
+      } else if (path === '/about') {
+        setAppState('about');
+      } else if (path === '/blog') {
+        setAppState('blog-list');
+      } else if (path.startsWith('/blog/')) {
+        setAppState('blog-list'); // Simplified for now
+      } else {
+        setAppState('upload');
+      }
+    };
+
+    handleLocationChange();
+    window.addEventListener('popstate', handleLocationChange);
+    return () => window.removeEventListener('popstate', handleLocationChange);
+  }, []);
+
+  const navigate = (state: AppState, path: string) => {
+    setAppState(state);
+    window.history.pushState({ state }, '', path);
+    window.scrollTo(0, 0);
+  };
+
+  const handleLegalNavigation = (state: AppState) => {
+    setPreviousState(appState);
+    const pathMap: Record<string, string> = {
+      'privacy': '/privacy',
+      'terms': '/terms',
+      'contact': '/contact',
+      'about': '/about',
+      'blog-list': '/blog',
+      'portfolio-view': '/portfolio',
+      'upload': '/'
+    };
+    navigate(state, pathMap[state] || '/');
+  };
+
+  const handleLegalBack = () => {
+    window.history.back();
+  };
+
+  const handleViewPortfolio = () => {
+    handleLegalNavigation('portfolio-view');
+  };
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [currentImage, setCurrentImage] = useState<string | null>(null);
 
@@ -261,19 +315,20 @@ const App: React.FC = () => {
     setError(null);
   };
 
-  const handleViewPortfolio = () => {
-    setAppState('portfolio-view');
-    window.scrollTo(0, 0);
-  };
+
 
   const handleGenerate = async () => {
     if (!originalImage || !selectedStyleId) return;
 
     // Check Daily Limit
-    const limitCheck = checkDailyLimit();
+    const limitCheck = await checkDailyLimit();
     if (!limitCheck.allowed) {
-      setError(t('dailyLimitReached').replace('{time}', limitCheck.timeRemainingStr || '24h'));
-      setShowEarnCredits(true); // Auto-open earn credits modal if limit reached
+      if (limitCheck.reason === 'ip_limit') {
+        setError('Too many requests from this IP address. Please try again tomorrow.');
+      } else {
+        setError(t('dailyLimitReached').replace('{time}', limitCheck.timeRemainingStr || '24h'));
+        setShowEarnCredits(true); // Auto-open earn credits modal if limit reached
+      }
       return;
     }
 
@@ -286,7 +341,7 @@ const App: React.FC = () => {
     try {
       const generatedImage = await generateHeadshot(originalImage, style.promptModifier);
       
-      incrementDailyUsage();
+      await incrementDailyUsage();
       setUsageUpdateKey(prev => prev + 1);
 
       setCurrentImage(generatedImage);
@@ -386,26 +441,13 @@ const App: React.FC = () => {
     setError(null);
   };
 
-  const handleLegalNavigation = (page: 'privacy' | 'terms' | 'contact' | 'about' | 'blog-list' | 'admin') => {
-    if (['upload', 'style-selection', 'result', 'blog-post', 'admin'].includes(appState)) {
-      setPreviousState(appState);
-    }
-    setAppState(page);
-    window.scrollTo(0, 0);
-  };
 
-  const handleLegalBack = () => {
-    if (appState === 'blog-post') {
-      setAppState('blog-list');
-    } else {
-      setAppState(previousState);
-    }
-  };
 
   const handleSelectArticle = (article: Article) => {
     setSelectedArticle(article);
     setPreviousState(appState);
     setAppState('blog-post');
+    window.history.pushState({ state: 'blog-post' }, '', `/blog/${article.id}`);
   };
 
   const handleAdRewardGranted = () => {
@@ -456,6 +498,7 @@ const App: React.FC = () => {
           refreshKey={usageUpdateKey}
           onOpenCredits={() => setShowEarnCredits(true)}
           onNavigateBlog={() => handleLegalNavigation('blog-list')}
+          onNavigatePortfolio={() => handleLegalNavigation('portfolio-view')}
           // onOpenAuth={() => setShowAuthModal(true)} // Disabled
         />
 

@@ -1,7 +1,7 @@
 
 declare namespace NodeJS {
   interface ProcessEnv {
-    API_KEY: string;
+    GEMINI_API_KEY: string;
     VITE_FIREBASE_API_KEY: string;
     VITE_FIREBASE_AUTH_DOMAIN: string;
     VITE_FIREBASE_PROJECT_ID: string;
