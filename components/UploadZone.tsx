@@ -35,8 +35,8 @@ const UploadZone: React.FC<UploadZoneProps> = ({ onImageSelected }) => {
 
     try {
       // Compress image before passing it up
-      // 1600px width is sufficient for AI headshots, 0.85 quality retains detail
-      const compressedBase64 = await compressImage(file, 1600, 0.85);
+      // 1024px width is optimized for AI processing stability
+      const compressedBase64 = await compressImage(file, 1024, 0.85);
       onImageSelected(compressedBase64);
     } catch (err) {
       console.error("Image processing error:", err);

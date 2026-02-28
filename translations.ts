@@ -129,6 +129,10 @@ export const translations = {
     filterInvert: "Invert",
     watermark: "ProHeadshot AI",
     removeWatermark: "Remove Watermark",
+    brightness: "Brightness",
+    contrast: "Contrast",
+    saturation: "Saturation",
+    resetAdjustments: "Reset All",
     
     // Chat
     notQuiteRight: "Not quite right?",
@@ -215,7 +219,40 @@ export const translations = {
     featureUnlimited: "Unlimited Generations for 24h",
     featureSupport: "Priority Support",
     buyNow: "Buy Now - $4.99",
-    restore: "Restore Purchase"
+    restore: "Restore Purchase",
+
+    // Features Section
+    featuresTitle: "Why Choose ProHeadshot AI?",
+    featuresSubtitle: "The smartest way to get professional photos without leaving your home.",
+    feature1Title: "AI-Powered Precision",
+    feature1Desc: "Our advanced Gemini Nano models understand facial structure, lighting, and professional aesthetics to deliver photorealistic results.",
+    feature2Title: "Instant Turnaround",
+    feature2Desc: "No more waiting days for a photographer to edit your photos. Get your professional headshots in under 60 seconds.",
+    feature3Title: "Cost Effective",
+    feature3Desc: "Save hundreds of dollars on studio sessions, equipment, and professional editing services.",
+    feature4Title: "Privacy First",
+    feature4Desc: "Your photos are processed securely. We prioritize your data privacy and never sell your images to third parties.",
+
+    // How It Works
+    howItWorksTitle: "How It Works",
+    howItWorksSubtitle: "Three simple steps to your new professional look.",
+    step1Title: "Upload",
+    step1Desc: "Upload a clear selfie from your phone or computer. Natural lighting works best!",
+    step2Title: "Style",
+    step2Desc: "Select from our curated professional styles like Corporate, Tech, or Studio.",
+    step3Title: "Refine",
+    step3Desc: "Use our AI Editor to make subtle adjustments or download your high-res photo instantly.",
+
+    // FAQ
+    faqTitle: "Frequently Asked Questions",
+    faq1Q: "How many photos do I get?",
+    faq1A: "You get 5 free generations per day. You can earn more credits by watching ads or sharing your results.",
+    faq2Q: "Can I use these for LinkedIn?",
+    faq2A: "Absolutely! Our styles are specifically designed to meet the professional standards of LinkedIn and corporate resumes.",
+    faq3Q: "What kind of photo should I upload?",
+    faq3A: "For best results, use a well-lit, front-facing photo with a neutral expression. Avoid hats, sunglasses, or busy backgrounds.",
+    faq4Q: "Is my data safe?",
+    faq4A: "Yes. We use industry-standard encryption and secure processing. Your original photos are deleted after processing unless you choose to save them.",
   },
   ar: {
     // Header
@@ -346,6 +383,10 @@ export const translations = {
     filterInvert: "عكس",
     watermark: "ProHeadshot AI",
     removeWatermark: "إزالة العلامة المائية",
+    brightness: "السطوع",
+    contrast: "التباين",
+    saturation: "التشبع",
+    resetAdjustments: "إعادة تعيين الكل",
     
     // Chat
     notQuiteRight: "ليست كما تريد تماماً؟",
@@ -432,6 +473,39 @@ export const translations = {
     featureUnlimited: "إنشاء غير محدود لمدة 24 ساعة",
     featureSupport: "دعم ذو أولوية",
     buyNow: "اشتري الآن - $4.99",
-    restore: "استعادة الشراء"
+    restore: "استعادة الشراء",
+
+    // Features Section
+    featuresTitle: "لماذا تختار ProHeadshot AI؟",
+    featuresSubtitle: "الطريقة الأذكى للحصول على صور احترافية دون مغادرة منزلك.",
+    feature1Title: "دقة مدعومة بالذكاء الاصطناعي",
+    feature1Desc: "تفهم نماذج Gemini Nano المتقدمة لدينا بنية الوجه والإضاءة والجماليات المهنية لتقديم نتائج واقعية.",
+    feature2Title: "نتائج فورية",
+    feature2Desc: "لا مزيد من الانتظار لأيام حتى يقوم المصور بتعديل صورك. احصل على صورك الاحترافية في أقل من 60 ثانية.",
+    feature3Title: "توفير التكاليف",
+    feature3Desc: "وفر مئات الدولارات من جلسات الاستوديو والمعدات وخدمات التحرير الاحترافية.",
+    feature4Title: "الخصوصية أولاً",
+    feature4Desc: "يتم معالجة صورك بشكل آمن. نحن نعطي الأولوية لخصوصية بياناتك ولا نبيع صورك أبداً لأطراف ثالثة.",
+
+    // How It Works
+    howItWorksTitle: "كيف يعمل؟",
+    howItWorksSubtitle: "ثلاث خطوات بسيطة لمظهرك المهني الجديد.",
+    step1Title: "الرفع",
+    step1Desc: "قم برفع صورة سيلفي واضحة من هاتفك أو جهاز الكمبيوتر. الإضاءة الطبيعية هي الأفضل!",
+    step2Title: "النمط",
+    step2Desc: "اختر من بين أنماطنا المهنية المختارة مثل الشركات أو التقنية أو الاستوديو.",
+    step3Title: "التحسين",
+    step3Desc: "استخدم محرر الذكاء الاصطناعي الخاص بنا لإجراء تعديلات طفيفة أو تحميل صورتك عالية الدقة فوراً.",
+
+    // FAQ
+    faqTitle: "الأسئلة الشائعة",
+    faq1Q: "كم عدد الصور التي أحصل عليها؟",
+    faq1A: "تحصل على 5 عمليات توليد مجانية يومياً. يمكنك كسب المزيد من الرصيد من خلال مشاهدة الإعلانات أو مشاركة نتائجك.",
+    faq2Q: "هل يمكنني استخدام هذه الصور لـ LinkedIn؟",
+    faq2A: "بالتأكيد! تم تصميم أنماطنا خصيصاً لتلبية المعايير المهنية لـ LinkedIn والسير الذاتية للشركات.",
+    faq3Q: "ما نوع الصورة التي يجب أن أرفعها؟",
+    faq3A: "للحصول على أفضل النتائج، استخدم صورة مضاءة جيداً وتواجه الكاميرا بتعبير محايد. تجنب القبعات أو النظارات الشمسية أو الخلفيات المزدحمة.",
+    faq4Q: "هل بياناتي آمنة؟",
+    faq4A: "نعم. نحن نستخدم تشفيراً قياسياً ومعالجة آمنة. يتم حذف صورك الأصلية بعد المعالجة إلا إذا اخترت حفظها.",
   }
 };

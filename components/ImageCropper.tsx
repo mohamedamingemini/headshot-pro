@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import Cropper from 'react-easy-crop';
 import { ZoomIn, RotateCw, Check, X } from 'lucide-react';
@@ -90,7 +91,8 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ imageSrc, onCropComplete, o
               onChange={(e) => setZoom(Number(e.target.value))}
               className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/50 rtl:rotate-180"
               style={{
-                 background: `linear-gradient(to right, #6366f1 ${((zoom - 1) / 2) * 100}%, #334155 ${((zoom - 1) / 2) * 100}%)`
+                 background: `linear-gradient(to right, #6366f1 ${((zoom - 1) / 2) * 100}%, #334155 ${((zoom - 1) / 2) * 100}%)`,
+                 touchAction: 'none'
               }}
             />
           </div>
@@ -111,7 +113,8 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ imageSrc, onCropComplete, o
               onChange={(e) => setRotation(Number(e.target.value))}
               className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/50 rtl:rotate-180"
               style={{
-                 background: `linear-gradient(to right, #6366f1 ${(rotation / 360) * 100}%, #334155 ${(rotation / 360) * 100}%)`
+                 background: `linear-gradient(to right, #6366f1 ${(rotation / 360) * 100}%, #334155 ${(rotation / 360) * 100}%)`,
+                 touchAction: 'none'
               }}
             />
           </div>

@@ -17,15 +17,116 @@ import BlogPost from './components/BlogPost';
 import AdminEditor from './components/AdminEditor';
 import RewardedAdModal from './components/RewardedAdModal';
 import EarnCreditsModal from './components/EarnCreditsModal';
-// import AuthModal from './components/AuthModal'; // Disabled
+import Features from './components/Features';
+import HowItWorks from './components/HowItWorks';
+import FAQ from './components/FAQ';
+import Testimonials from './components/Testimonials';
+import ProfessionalTips from './components/ProfessionalTips';
+import PortfolioView from './components/PortfolioView';
 import SEO from './components/SEO';
 import { generateHeadshot, editHeadshot } from './services/geminiService';
 import { checkDailyLimit, incrementDailyUsage, addCredits, recordLinkedInClaim } from './services/usageService';
-import { AppState, ChatMessage, Article } from './types';
+import { AppState, ChatMessage, Article, PortfolioData } from './types';
 import { HEADSHOT_STYLES, AD_CONFIG } from './constants';
 import { Wand2, AlertCircle, PlayCircle } from 'lucide-react';
 import { useLanguage } from './contexts/LanguageContext';
 import { AuthProvider } from './contexts/AuthContext';
+
+const MOHAMED_PORTFOLIO: PortfolioData = {
+  name: "Mohamed Farid Amin",
+  title: "Operations Senior Supervisor",
+  summary: "Results-driven Contact Centre Supervisor with over 10 years of experience in telecommunications, loyalty programs, and shopping mall operations. Proven expertise in optimizing processes, leading high-performing teams, and implementing data-driven solutions to enhance customer experience and operational efficiency. Expertise in SLA-driven environments and CRM automation tools like Zendesk, Genesys Cloud and Infobip.",
+  photo: "https://i.postimg.cc/ppKrWFP5/Personal-photo2.png", 
+  skills: [
+    { name: "Team Leadership", level: 98 },
+    { name: "Operations Management", level: 96 },
+    { name: "Process Optimization", level: 94 },
+    { name: "Power BI & Analytics", level: 90 },
+    { name: "CRM Automation", level: 95 },
+    { name: "SLA Management", level: 97 }
+  ],
+  experience: [
+    {
+      company: "Hexaware Egypt",
+      role: "Operations Senior Supervisor",
+      period: "April 2025 - Present",
+      description: "VFS Global Operations. Leading a team of 20 agents across multi-channel operations. Responsible for ensuring QMS documentation is up to date, resource planning, and analyzing attrition. Ensuring production through optimal work allocation and monitoring."
+    },
+    {
+      company: "Teleperformance Dubai",
+      role: "Operations Supervisor",
+      period: "Oct 2021 - Oct 2024",
+      description: "Majid Al Futtaim Shopping Malls and Loyalty Program. Led a team of 18 agents, improving productivity by 20%. Streamlined processes for seamless customer experience. Handled VIP client support across four countries."
+    },
+    {
+      company: "RAYA Contact Center",
+      role: "Technical Support Team Manager",
+      period: "May 2015 - Sep 2021",
+      description: "Delivered bilingual technical assistance to UAE-based customers. Diagnosed 60+ daily technical issues with 94% first-contact resolution. Reduced escalations to backend teams by 25% and cut AHT by 15% through a centralized knowledge base."
+    }
+  ],
+  education: [
+    {
+      school: "Cairo University – Egypt",
+      degree: "Bachelor’s in Business Administration, Investment, and Financing",
+      year: "2006 – 2010"
+    },
+    {
+      school: "Cambridge Training College Britain",
+      degree: "General English Advanced Level",
+      year: "2011"
+    }
+  ],
+  projects: [
+    {
+      name: "BrainBox Implementation Leader",
+      description: "Recognized by Hexaware for designing and implementing the VFS knowledgebase, significantly improving operational efficiency.",
+      tech: ["Knowledge Management", "Process Design"]
+    },
+    {
+      name: "Lean 6sigma Yellow Project",
+      description: "Top contributor for AHT reduction project which had a direct positive impact on VFS operations and cost saving.",
+      tech: ["Lean Six Sigma", "Operational Excellence"]
+    },
+    {
+      name: "Automated Escalation Platform",
+      description: "Achieved $29,000 annual cost savings by implementing an automated escalation platform for improved process management.",
+      tech: ["Automation", "CRM"]
+    }
+  ],
+  certifications: [
+    { 
+      name: "Lean Six Sigma Yellow Belt", 
+      issuer: "Hexaware technology (Jan 2026)",
+      image: "https://i.postimg.cc/tTNr1SBv/LSSYB.png"
+    },
+    { 
+      name: "SHARE Certificate", 
+      issuer: "Majid Al Futtaim",
+      image: "https://i.postimg.cc/7CX8mxDj/SHARE-Certificate.png"
+    },
+    { 
+      name: "Most Engaged Leaders 2022-2023", 
+      issuer: "Majid Al Futtaim / Teleperformance",
+      image: "https://i.postimg.cc/SXmb6X0T/TP-top-achiever.png"
+    },
+    { 
+      name: "BrainBox Implementation Leader", 
+      issuer: "Hexaware (Dec 2025)",
+      image: "https://i.postimg.cc/L4vfJK3N/Brain-Box.jpg"
+    },
+    { 
+      name: "General English Advanced Level", 
+      issuer: "Cambridge Training College Britain",
+      image: "https://i.postimg.cc/zVPN1DgV/Cambridge.jpg"
+    },
+    { 
+      name: "Letter of Recognition", 
+      issuer: "Allianz (Sep 2012)",
+      image: "https://i.postimg.cc/vcSyd8Vx/Allianz.jpg"
+    }
+  ]
+};
 
 const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>('upload');
@@ -37,6 +138,7 @@ const App: React.FC = () => {
 
   const [selectedStyleId, setSelectedStyleId] = useState<string | null>(null);
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
+  const [portfolioData, setPortfolioData] = useState<PortfolioData | null>(MOHAMED_PORTFOLIO);
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,6 +156,19 @@ const App: React.FC = () => {
 
   const getSEOProps = () => {
     switch (appState) {
+      case 'portfolio-view':
+        return {
+          title: 'Mohamed Farid Amin - Portfolio',
+          description: 'Operations Senior Supervisor with over 10 years of experience in telecommunications, loyalty programs, and shopping mall operations.',
+          canonicalUrl: 'https://proheadshot.ai/portfolio',
+          image: portfolioData?.photo || 'https://i.postimg.cc/ppKrWFP5/Personal-photo2.png'
+        };
+      case 'upload':
+        return {
+          title: 'AI Professional Headshot Generator',
+          description: 'Generate professional headshots with AI. Upload your photo and get a high-quality professional portrait instantly.',
+          canonicalUrl: 'https://proheadshot.ai/'
+        };
       case 'privacy':
         return { 
           title: t('privacyPolicy'), 
@@ -144,6 +259,11 @@ const App: React.FC = () => {
   const handleStyleSelected = (id: string) => {
     setSelectedStyleId(id);
     setError(null);
+  };
+
+  const handleViewPortfolio = () => {
+    setAppState('portfolio-view');
+    window.scrollTo(0, 0);
   };
 
   const handleGenerate = async () => {
@@ -370,6 +490,12 @@ const App: React.FC = () => {
           {appState === 'blog-list' && <BlogList onSelectArticle={handleSelectArticle} />}
           {appState === 'blog-post' && selectedArticle && <BlogPost article={selectedArticle} onBack={handleLegalBack} />}
           {appState === 'admin' && <AdminEditor onBack={handleLegalBack} />}
+          {appState === 'portfolio-view' && portfolioData && (
+            <PortfolioView 
+              data={portfolioData} 
+              onBack={handleLegalBack} 
+            />
+          )}
 
           {appState === 'upload' && (
              <div className="flex flex-col items-center animate-fadeIn mt-6 sm:mt-12">
@@ -384,7 +510,40 @@ const App: React.FC = () => {
                </div>
                <UploadZone onImageSelected={handleImageSelected} />
                
+               <div className="mt-12 w-full max-w-4xl mx-auto bg-gradient-to-br from-indigo-900/20 to-purple-900/20 border border-indigo-500/20 rounded-3xl p-8 sm:p-12 text-center shadow-2xl">
+                 <h3 className="text-2xl sm:text-3xl font-bold text-white mb-4">View My Interactive Portfolio</h3>
+                 <p className="text-slate-400 mb-8 max-w-2xl mx-auto">
+                   Explore my professional journey, technical skills, and key achievements through this AI-powered interactive showcase.
+                 </p>
+                 <Button 
+                   onClick={handleViewPortfolio}
+                   className="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-4 rounded-2xl font-bold text-lg shadow-lg shadow-indigo-500/20"
+                 >
+                   Explore Portfolio
+                 </Button>
+               </div>
+               
                <AdSense slot={AD_CONFIG.SLOTS.HOME_HERO} className="mt-8 sm:mt-12" />
+
+               <Features />
+               <HowItWorks />
+               <ProfessionalTips />
+               <Testimonials />
+               
+               <div className="w-full py-16 border-t border-slate-800">
+                 <div className="flex flex-col sm:flex-row items-center justify-between mb-10 gap-4">
+                   <h2 className="text-3xl font-bold text-white">{t('blogTitle')}</h2>
+                   <button 
+                     onClick={() => handleLegalNavigation('blog-list')}
+                     className="text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-2"
+                   >
+                     {t('readMore')} &rarr;
+                   </button>
+                 </div>
+                 <BlogList onSelectArticle={handleSelectArticle} limit={3} hideHero />
+               </div>
+
+               <FAQ />
              </div>
           )}
 

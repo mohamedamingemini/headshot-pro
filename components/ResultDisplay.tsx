@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Download, Layers, Palette, Undo, Redo, Share2, Check, SplitSquareHorizontal, BookOpen, ArrowRight } from 'lucide-react';
+import { Download, Layers, Palette, Undo, Redo, Share2, Check, SplitSquareHorizontal, ArrowRight, Sun, Contrast, Droplets, RotateCcw } from 'lucide-react';
 import AdSense from './AdSense';
 import { useLanguage } from '../contexts/LanguageContext';
 import ChatInterface from './ChatInterface';
@@ -36,6 +36,10 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
 }) => {
   const [blurAmount, setBlurAmount] = useState(0);
   const [activeFilter, setActiveFilter] = useState('none');
+  const [brightness, setBrightness] = useState(1);
+  const [contrast, setContrast] = useState(1);
+  const [saturation, setSaturation] = useState(1);
+  
   const [isSharing, setIsSharing] = useState(false);
   const [shareMessage, setShareMessage] = useState<string | null>(null);
   const [isCompareMode, setIsCompareMode] = useState(false);
@@ -47,7 +51,6 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
         try {
             const articles = await getArticles();
             if (articles.length > 0) {
-                // Get a random article
                 const random = articles[Math.floor(Math.random() * articles.length)];
                 setSuggestedArticle(random);
             }
@@ -67,7 +70,6 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
 
   const handleDownload = async () => {
     try {
-      // Use Blob for download to handle large base64 strings efficiently
       const response = await fetch(generatedImage);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -79,8 +81,6 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (e) {
-      console.error("Download failed, falling back to basic link", e);
-      // Fallback
       const link = document.createElement('a');
       link.href = generatedImage;
       link.download = `pro-headshot-${Date.now()}.jpg`;
@@ -129,17 +129,73 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
   const getFilterStyle = () => {
     let filterString = '';
     if (activeFilter !== 'none') {
-      filterString += `${activeFilter}(100%)`;
+      filterString += `${activeFilter}(100%) `;
     }
-    return filterString.trim() || 'none';
+    filterString += `brightness(${brightness}) contrast(${contrast}) saturate(${saturation})`;
+    return filterString.trim();
   };
+
+  const resetAdjustments = () => {
+    setBrightness(1);
+    setContrast(1);
+    setSaturation(1);
+    setBlurAmount(0);
+    setActiveFilter('none');
+  };
+
+  const AdjustmentSlider = ({ 
+    label, 
+    value, 
+    onChange, 
+    min, 
+    max, 
+    step, 
+    icon: Icon,
+    displayValue 
+  }: { 
+    label: string, 
+    value: number, 
+    onChange: (val: number) => void, 
+    min: number, 
+    max: number, 
+    step: number, 
+    icon: any,
+    displayValue?: string
+  }) => (
+    <div className="bg-slate-800/50 rounded-xl p-3 sm:p-4 border border-slate-700/50 flex flex-col justify-center">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+            <Icon className="w-4 h-4 text-indigo-400" />
+            <span className="text-sm font-medium text-slate-200">{label}</span>
+        </div>
+        <span className="text-xs text-slate-400 font-mono bg-slate-900 px-2 py-0.5 rounded border border-slate-700">
+            {displayValue || value.toFixed(2)}
+        </span>
+      </div>
+      
+      <div className="relative h-6 flex items-center">
+        <input
+            type="range"
+            min={min}
+            max={max}
+            step={step}
+            value={value}
+            onChange={(e) => onChange(parseFloat(e.target.value))}
+            className="w-full h-2 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/50 rtl:rotate-180"
+            style={{
+                background: `linear-gradient(to right, #6366f1 ${((value - min) / (max - min)) * 100}%, #334155 ${((value - min) / (max - min)) * 100}%)`,
+                touchAction: 'none'
+            }}
+        />
+      </div>
+    </div>
+  );
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 w-full max-w-5xl mx-auto">
       {/* Sidebar (Original Image) */}
       <div className="flex flex-col gap-4 order-2 md:order-1 items-center md:items-stretch">
         
-        {/* Header Spacer for alignment */}
         <div className="hidden md:flex items-center justify-between min-h-[44px]">
              <h3 className="text-slate-400 font-medium text-sm uppercase tracking-wider">{t('original')}</h3>
         </div>
@@ -153,13 +209,11 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
           />
         </div>
 
-        {/* Suggested Article (Moved Above Ad) - Sized 300x250 */}
         {suggestedArticle && onSelectArticle && (
             <div 
                 onClick={() => onSelectArticle(suggestedArticle)}
                 className="w-full max-w-[300px] h-[250px] mx-auto bg-slate-800 rounded-xl overflow-hidden border border-slate-700 hover:border-indigo-500 cursor-pointer group transition-all shadow-lg relative flex flex-col"
             >
-                {/* Image Section (~55%) */}
                 <div className="h-[140px] w-full relative overflow-hidden shrink-0">
                     <img 
                         src={suggestedArticle.imageUrl} 
@@ -171,7 +225,6 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
                     </div>
                 </div>
 
-                {/* Content Section */}
                 <div className="flex-1 p-4 flex flex-col justify-between bg-gradient-to-b from-slate-800 to-slate-900 border-t border-slate-700/50">
                      <div>
                         <h5 className="font-bold text-white text-sm leading-tight mb-2 line-clamp-2 group-hover:text-indigo-300 transition-colors">
@@ -188,9 +241,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
             </div>
         )}
 
-        {/* AdSense Component - Aligned */}
         <div className="w-full max-w-[300px] mx-auto flex flex-col items-center">
-             {/* AdSense wrapper ensuring centering */}
              <div className="w-full bg-slate-800/20 rounded-xl p-2 border border-slate-700/30 flex flex-col items-center justify-center min-h-[260px]">
                 <span className="text-[9px] uppercase tracking-widest text-slate-600 font-semibold mb-2">{t('advertisement')}</span>
                 <AdSense 
@@ -274,16 +325,14 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
              <CompareSlider original={originalImage} generated={generatedImage} />
           ) : (
             <>
-              {/* Base Image with Color Filters */}
               <img 
                 src={generatedImage} 
                 alt="Generated headshot" 
-                className="w-full h-full object-cover relative z-0 transition-all duration-500"
+                className="w-full h-full object-cover relative z-0 transition-all duration-300"
                 style={{ filter: getFilterStyle() }}
                 decoding="async"
               />
               
-              {/* Background Blur Overlay */}
               {blurAmount > 0 && (
                 <div 
                   className="absolute inset-0 z-10 pointer-events-none transition-all duration-300"
@@ -301,42 +350,74 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
           <div className="absolute inset-0 pointer-events-none ring-inset ring-1 ring-white/10 rounded-2xl z-20"></div>
         </div>
 
-        {/* Controls only visible if NOT in compare mode */}
+        {/* Adjustments Panel */}
         {!isCompareMode && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fadeIn">
-            {/* Blur Control Slider */}
-            <div className="bg-slate-800/50 rounded-xl p-3 sm:p-4 border border-slate-700 flex flex-col justify-center">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                    <Layers className="w-4 h-4 text-indigo-400" />
-                    <span className="text-sm font-medium text-slate-200">{t('backgroundBlur')}</span>
-                </div>
-                <span className="text-xs text-slate-400 font-mono bg-slate-900 px-2 py-0.5 rounded border border-slate-700">{blurAmount.toFixed(1)}px</span>
-              </div>
-              
-              <div className="relative h-6 flex items-center">
-                <input
-                    type="range"
-                    min="0"
-                    max="10"
-                    step="0.1"
-                    value={blurAmount}
-                    onChange={(e) => setBlurAmount(parseFloat(e.target.value))}
-                    className="w-full h-2 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500/50 rtl:rotate-180"
-                    style={{
-                        background: `linear-gradient(to right, #6366f1 ${(blurAmount / 10) * 100}%, #334155 ${(blurAmount / 10) * 100}%)`
-                    }}
-                />
-              </div>
+          <div className="flex flex-col gap-4 animate-fadeIn">
+            <div className="flex justify-between items-center px-1">
+                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest">{t('quickAdjustments')}</h4>
+                <button 
+                  onClick={resetAdjustments}
+                  className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors uppercase tracking-wider"
+                >
+                   <RotateCcw className="w-3 h-3" />
+                   {t('resetAdjustments')}
+                </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Blur Control */}
+              <AdjustmentSlider 
+                label={t('backgroundBlur')}
+                value={blurAmount}
+                onChange={setBlurAmount}
+                min={0}
+                max={10}
+                step={0.1}
+                icon={Layers}
+                displayValue={`${blurAmount.toFixed(1)}px`}
+              />
+
+              {/* Brightness Control */}
+              <AdjustmentSlider 
+                label={t('brightness')}
+                value={brightness}
+                onChange={setBrightness}
+                min={0.5}
+                max={1.5}
+                step={0.01}
+                icon={Sun}
+              />
+
+              {/* Contrast Control */}
+              <AdjustmentSlider 
+                label={t('contrast')}
+                value={contrast}
+                onChange={setContrast}
+                min={0.5}
+                max={1.5}
+                step={0.01}
+                icon={Contrast}
+              />
+
+              {/* Saturation Control */}
+              <AdjustmentSlider 
+                label={t('saturation')}
+                value={saturation}
+                onChange={setSaturation}
+                min={0}
+                max={2}
+                step={0.01}
+                icon={Droplets}
+              />
             </div>
 
             {/* Color Filter Controls */}
-            <div className="bg-slate-800/50 rounded-xl p-3 sm:p-4 border border-slate-700">
+            <div className="bg-slate-800/50 rounded-xl p-3 sm:p-4 border border-slate-700/50">
               <div className="flex items-center gap-3 mb-3">
                 <Palette className="w-4 h-4 text-indigo-400" />
                 <span className="text-sm font-medium text-slate-200">{t('colorFilters')}</span>
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {filterOptions.map((option) => (
                   <button
                     key={option.id}
@@ -356,7 +437,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
           </div>
         )}
 
-        {/* Integrated Chat Interface (Below Edit Options) */}
+        {/* Integrated Chat Interface */}
         <div className="mt-2 border-t border-slate-800 pt-6">
            <h3 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
              {t('aiEditor')}

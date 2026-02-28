@@ -1,34 +1,44 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { getArticles } from '../services/articleService';
 import { Article } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
-import { Briefcase, Lightbulb, Newspaper, Clock, ArrowRight, LayoutGrid, Search, Star } from 'lucide-react';
+import { Briefcase, Lightbulb, Newspaper, Clock, ArrowRight, LayoutGrid, Search, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import AdSense from './AdSense';
 import { AD_CONFIG } from '../constants';
 
 interface BlogListProps {
   onSelectArticle: (article: Article) => void;
+  limit?: number;
+  hideHero?: boolean;
 }
 
-const BlogList: React.FC<BlogListProps> = ({ onSelectArticle }) => {
+const ITEMS_PER_PAGE = 9;
+
+const BlogList: React.FC<BlogListProps> = ({ onSelectArticle, limit, hideHero }) => {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<'all' | 'tip' | 'job' | 'news'>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const { t } = useLanguage();
 
   useEffect(() => {
     const fetchContent = async () => {
       try {
         const data = await getArticles();
-        setArticles(data);
+        setArticles(limit ? data.slice(0, limit) : data);
       } finally {
         setLoading(false);
       }
     };
     fetchContent();
-  }, []);
+  }, [limit]);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeFilter, searchTerm]);
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
@@ -60,27 +70,39 @@ const BlogList: React.FC<BlogListProps> = ({ onSelectArticle }) => {
     </button>
   );
 
-  const filteredArticles = articles.filter(article => {
-    // 1. Category Filter
-    const matchesCategory = activeFilter === 'all' ? true : article.category === activeFilter;
-    
-    // 2. Search Filter
-    const term = searchTerm.toLowerCase().trim();
-    if (!term) return matchesCategory;
+  const filteredArticles = useMemo(() => {
+    return articles.filter(article => {
+      // 1. Category Filter
+      const matchesCategory = activeFilter === 'all' ? true : article.category === activeFilter;
+      
+      // 2. Search Filter
+      const term = searchTerm.toLowerCase().trim();
+      if (!term) return matchesCategory;
 
-    const matchesSearch = 
-      article.title.toLowerCase().includes(term) || 
-      article.excerpt.toLowerCase().includes(term) ||
-      (article.tags && article.tags.some(tag => tag.toLowerCase().includes(term)));
+      const matchesSearch = 
+        article.title.toLowerCase().includes(term) || 
+        article.excerpt.toLowerCase().includes(term) ||
+        (article.tags && article.tags.some(tag => tag.toLowerCase().includes(term)));
 
-    return matchesCategory && matchesSearch;
-  });
+      return matchesCategory && matchesSearch;
+    });
+  }, [articles, activeFilter, searchTerm]);
 
   // Determine Featured Article behavior
   // We show a large featured card only when viewing "All" and not searching
-  const showFeatured = activeFilter === 'all' && !searchTerm && filteredArticles.length > 0;
+  const showFeatured = activeFilter === 'all' && !searchTerm && filteredArticles.length > 0 && currentPage === 1;
   const featuredArticle = showFeatured ? filteredArticles[0] : null;
-  const gridArticles = showFeatured ? filteredArticles.slice(1) : filteredArticles;
+  const allGridArticles = showFeatured ? filteredArticles.slice(1) : filteredArticles;
+
+  // Pagination Logic
+  const totalPages = Math.ceil(allGridArticles.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const gridArticles = allGridArticles.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   if (loading) {
     return (
@@ -97,32 +119,34 @@ const BlogList: React.FC<BlogListProps> = ({ onSelectArticle }) => {
   return (
     <div className="animate-fadeIn pb-12">
       {/* Blog Hero */}
-      <div className="text-center py-12 px-4 bg-gradient-to-b from-indigo-900/20 to-transparent mb-8">
-        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3">{t('blogTitle')}</h1>
-        <p className="text-slate-400 text-lg max-w-2xl mx-auto">{t('blogSubtitle')}</p>
+      {!hideHero && (
+        <div className="text-center py-12 px-4 bg-gradient-to-b from-indigo-900/20 to-transparent mb-8">
+          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3">{t('blogTitle')}</h1>
+          <p className="text-slate-400 text-lg max-w-2xl mx-auto">{t('blogSubtitle')}</p>
 
-        {/* Search Bar */}
-        <div className="max-w-md mx-auto mt-6 relative animate-fadeIn">
-           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-4 w-4 text-slate-500" />
-           </div>
-           <input
-              type="text"
-              className="block w-full pl-10 pr-4 py-2.5 border border-slate-700/50 rounded-full leading-5 bg-slate-800/50 text-slate-200 placeholder-slate-500 focus:outline-none focus:bg-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 sm:text-sm transition-all shadow-sm hover:border-slate-600"
-              placeholder={t('searchArticles')}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-           />
-        </div>
+          {/* Search Bar */}
+          <div className="max-w-md mx-auto mt-6 relative animate-fadeIn">
+             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-4 w-4 text-slate-500" />
+             </div>
+             <input
+                type="text"
+                className="block w-full pl-10 pr-4 py-2.5 border border-slate-700/50 rounded-full leading-5 bg-slate-800/50 text-slate-200 placeholder-slate-500 focus:outline-none focus:bg-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 sm:text-sm transition-all shadow-sm hover:border-slate-600"
+                placeholder={t('searchArticles')}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+             />
+          </div>
 
-        {/* Filter Controls */}
-        <div className="flex flex-wrap justify-center gap-3 mt-6 animate-fadeIn">
-            <FilterButton id="all" label="All Posts" icon={LayoutGrid} />
-            <FilterButton id="tip" label={t('categoryTip')} icon={Lightbulb} />
-            <FilterButton id="job" label={t('categoryJob')} icon={Briefcase} />
-            <FilterButton id="news" label={t('categoryNews')} icon={Newspaper} />
+          {/* Filter Controls */}
+          <div className="flex flex-wrap justify-center gap-3 mt-6 animate-fadeIn">
+              <FilterButton id="all" label="All Posts" icon={LayoutGrid} />
+              <FilterButton id="tip" label={t('categoryTip')} icon={Lightbulb} />
+              <FilterButton id="job" label={t('categoryJob')} icon={Briefcase} />
+              <FilterButton id="news" label={t('categoryNews')} icon={Newspaper} />
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
@@ -283,6 +307,58 @@ const BlogList: React.FC<BlogListProps> = ({ onSelectArticle }) => {
             </div>
         )}
         
+        {/* Pagination Controls */}
+        {!limit && totalPages > 1 && (
+          <div className="mt-16 flex justify-center items-center gap-2">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="p-2 rounded-lg border border-slate-700 bg-slate-800/50 text-slate-400 hover:text-white hover:border-indigo-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => {
+                // Simple logic to show only a few pages if there are many
+                if (
+                  totalPages > 7 && 
+                  page !== 1 && 
+                  page !== totalPages && 
+                  (page < currentPage - 1 || page > currentPage + 1)
+                ) {
+                  if (page === currentPage - 2 || page === currentPage + 2) {
+                    return <span key={page} className="px-2 text-slate-600">...</span>;
+                  }
+                  return null;
+                }
+
+                return (
+                  <button
+                    key={page}
+                    onClick={() => handlePageChange(page)}
+                    className={`w-10 h-10 rounded-lg text-sm font-bold transition-all border ${
+                      currentPage === page
+                      ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-900/20'
+                      : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:text-white hover:border-slate-600'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="p-2 rounded-lg border border-slate-700 bg-slate-800/50 text-slate-400 hover:text-white hover:border-indigo-500 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+        )}
+
         {/* Bottom Banner Ad */}
         <div className="mt-12">
             <AdSense slot={AD_CONFIG.SLOTS.BLOG_BOTTOM} />

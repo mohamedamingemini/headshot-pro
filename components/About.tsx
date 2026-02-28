@@ -25,6 +25,29 @@ const About: React.FC<AboutProps> = ({ onBack }) => {
         </p>
       </div>
 
+      <div className="prose prose-invert max-w-none mb-12">
+        <h2 className="text-2xl font-bold text-white mb-4">Our Story</h2>
+        <p className="mb-6">
+          Founded in 2024, ProHeadshot AI was born out of a simple observation: professional photography is often too expensive, time-consuming, and geographically limited for the average job seeker, entrepreneur, or remote professional. We saw a world where talented individuals were being held back by a lack of access to high-quality visual branding. We believed that the latest breakthroughs in Generative AI could bridge this gap, democratizing professional portraiture for everyone, regardless of their budget or location.
+        </p>
+        <p className="mb-6">
+          Our team of engineers and designers spent months researching the nuances of professional photography. We studied everything from the classic three-point lighting setup to the subtle textures of various business fabrics. By leveraging Google's state-of-the-art Gemini technology, we've built a platform that doesn't just "filter" photos, but truly understands the structural and aesthetic requirements of a professional headshot.
+        </p>
+
+        <h2 className="text-2xl font-bold text-white mb-4">Our Mission</h2>
+        <p className="mb-6">
+          At ProHeadshot AI, our mission is to empower professionals worldwide by providing them with the tools they need to present their best selves to the world. We believe that a professional image should be a right, not a luxury. In an era where digital presence is often the primary way we connect with colleagues, clients, and employers, we are dedicated to making high-end photography accessible, affordable, and instantaneous.
+        </p>
+
+        <h2 className="text-2xl font-bold text-white mb-4">Why It Matters</h2>
+        <p className="mb-6">
+          In today's digital-first world, your profile picture is your digital handshake. It's the first thing people see on LinkedIn, company directories, personal portfolios, and social media platforms. A high-quality headshot communicates professionalism, confidence, and approachability. It builds trust before a single word is spoken.
+        </p>
+        <p className="mb-6">
+          Research consistently shows that profiles with professional photos receive significantly more views and engagement. For job seekers, it can be the difference between getting an interview and being overlooked. For entrepreneurs, it's a critical part of building a personal brand that attracts investors and partners. We are proud to play a small part in helping our users achieve their professional goals through the power of AI.
+        </p>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
          <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700 flex flex-col items-center text-center">
             <div className="w-12 h-12 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-400 mb-4">

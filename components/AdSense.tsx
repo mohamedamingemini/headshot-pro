@@ -23,6 +23,8 @@ const AdSense: React.FC<AdSenseProps> = ({
 }) => {
   const [isDev, setIsDev] = useState(false);
   const adPushed = useRef(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     // Check for localhost or valid local IPs to show placeholder
@@ -32,18 +34,51 @@ const AdSense: React.FC<AdSenseProps> = ({
       return;
     }
 
-    // Only push the ad once per component mount
-    if (adPushed.current) return;
+    // Dynamically load AdSense script if not already present
+    const existingScript = document.getElementById('adsense-script');
+    if (!existingScript) {
+      const script = document.createElement('script');
+      script.id = 'adsense-script';
+      script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${client}`;
+      script.async = true;
+      script.crossOrigin = 'anonymous';
+      document.head.appendChild(script);
+    }
+
+    // Use ResizeObserver to detect exactly when the container has a width
+    // This is more reliable than a timeout for "availableWidth=0" errors
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.contentRect.width > 0 && !isReady) {
+          setIsReady(true);
+          observer.disconnect(); // Only need to trigger once
+        }
+      }
+    });
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [isReady]);
+
+  useEffect(() => {
+    if (isDev || adPushed.current || !isReady) return;
 
     try {
       // @ts-ignore
       const adsbygoogle = window.adsbygoogle || [];
-      adsbygoogle.push({});
-      adPushed.current = true;
+      
+      // Double check dimensions just before pushing
+      if (containerRef.current && containerRef.current.offsetWidth > 0) {
+        adsbygoogle.push({});
+        adPushed.current = true;
+      }
     } catch (e) {
-      console.error('AdSense load error:', e);
+      console.warn('AdSense push error:', e);
     }
-  }, [slot]); // Re-run only if slot changes (should be stable usually)
+  }, [isReady, isDev]);
 
   if (isDev) {
     return (
@@ -53,7 +88,7 @@ const AdSense: React.FC<AdSenseProps> = ({
            flex flex-col items-center justify-center text-slate-400 p-4
            ${variant === 'card' ? 'w-full h-full' : 'w-full max-w-[728px] py-8'}
          `}>
-            <span className="font-semibold text-sm">AdSense Placeholder</span>
+            <span className="font-semibold text-sm text-center">AdSense Placeholder</span>
             <span className="text-[10px] sm:text-xs opacity-75 text-center mt-1">
                Ads do not render on localhost.<br/>
                Slot ID: {slot}
@@ -63,41 +98,44 @@ const AdSense: React.FC<AdSenseProps> = ({
     );
   }
 
-  // Production render for Card variant (Style Selector)
-  if (variant === 'card') {
-    return (
-      <div className={`w-full h-full overflow-hidden ${className}`}>
-        <ins
-          className="adsbygoogle"
-          style={{ display: 'block', width: '100%', height: '100%', ...style }}
-          data-ad-client={client}
-          data-ad-slot={slot}
-          data-ad-format={format}
-          data-full-width-responsive={responsive ? "true" : "false"}
-        />
-      </div>
-    );
-  }
+  const InsTag = () => (
+    <ins
+      className="adsbygoogle"
+      style={{ display: 'block', width: '100%', ...(variant === 'card' ? { height: '100%' } : {}), ...style }}
+      data-ad-client={client}
+      data-ad-slot={slot}
+      data-ad-format={format}
+      data-full-width-responsive={responsive ? "true" : "false"}
+    />
+  );
 
-  // Production render for Banner variant (Standard)
   return (
-    <div className={`w-full flex flex-col items-center my-8 ${className}`}>
-      {/* Ad Container with compliant labeling */}
-      <div className="w-full max-w-[728px] bg-slate-800/30 rounded-lg overflow-hidden border border-slate-800/50 relative min-h-[90px] flex items-center justify-center">
-        <span className="absolute top-0 right-0 bg-slate-800 text-[9px] text-slate-500 px-1.5 py-0.5 rounded-bl uppercase tracking-wider z-10">Ad</span>
-        <ins
-          className="adsbygoogle"
-          style={{ display: 'block', width: '100%', ...style }}
-          data-ad-client={client}
-          data-ad-slot={slot}
-          data-ad-format={format}
-          data-full-width-responsive={responsive ? "true" : "false"}
-        />
-        {/* Fallback visual if ad fails to load in production */}
-        <div className="text-slate-700 text-xs font-mono absolute pointer-events-none opacity-20 select-none z-0">
-          Sponsored
+    <div 
+      ref={containerRef} 
+      className={`
+        w-full overflow-hidden 
+        ${variant === 'banner' ? 'flex flex-col items-center my-8' : 'h-full min-h-[100px]'} 
+        ${className}
+      `}
+    >
+      {variant === 'banner' ? (
+        <div className="w-full max-w-[728px] bg-slate-800/30 rounded-lg overflow-hidden border border-slate-800/50 relative min-h-[90px] flex items-center justify-center">
+          <span className="absolute top-0 right-0 bg-slate-800 text-[9px] text-slate-500 px-1.5 py-0.5 rounded-bl uppercase tracking-wider z-10">Ad</span>
+          {isReady && <InsTag />}
+          {!adPushed.current && (
+            <div className="text-slate-700 text-xs font-mono absolute pointer-events-none opacity-20 select-none z-0">
+              Sponsored
+            </div>
+          )}
         </div>
-      </div>
+      ) : (
+        <>
+          <span className="absolute top-0 right-0 z-20 bg-slate-900/80 text-[10px] text-slate-400 px-2 py-1 rounded-bl-lg border-b border-l border-slate-700 uppercase tracking-wider">
+            Ad
+          </span>
+          {isReady && <InsTag />}
+        </>
+      )}
     </div>
   );
 };
