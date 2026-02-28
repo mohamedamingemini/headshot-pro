@@ -3,6 +3,7 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import { LanguageProvider } from './contexts/LanguageContext';
+import { Analytics } from '@vercel/analytics/react';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -67,6 +68,7 @@ root.render(
     <ErrorBoundary>
       <LanguageProvider>
         <App />
+        <Analytics />
       </LanguageProvider>
     </ErrorBoundary>
   </React.StrictMode>
