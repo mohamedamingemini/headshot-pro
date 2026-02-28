@@ -19,13 +19,13 @@ const getEnv = (key: string, defaultValue: string) => {
 };
 
 const firebaseConfig = {
-  apiKey: getEnv("VITE_FIREBASE_API_KEY", "AIzaSyA1oy-aDXoHN5dhM6DE2irI98HiZ3t1w_8"),
-  authDomain: getEnv("VITE_FIREBASE_AUTH_DOMAIN", "proheadshot-ai-f7c02.firebaseapp.com"),
-  projectId: getEnv("VITE_FIREBASE_PROJECT_ID", "proheadshot-ai-f7c02"),
-  storageBucket: getEnv("VITE_FIREBASE_STORAGE_BUCKET", "proheadshot-ai-f7c02.firebasestorage.app"),
-  messagingSenderId: getEnv("VITE_FIREBASE_MESSAGING_SENDER_ID", "600103177183"),
-  appId: getEnv("VITE_FIREBASE_APP_ID", "1:600103177183:web:f9bde70f56ff8cb290526a"),
-  measurementId: getEnv("VITE_FIREBASE_MEASUREMENT_ID", "G-EMRDHJ3Q21")
+  apiKey: getEnv("VITE_FIREBASE_API_KEY", ""),
+  authDomain: getEnv("VITE_FIREBASE_AUTH_DOMAIN", ""),
+  projectId: getEnv("VITE_FIREBASE_PROJECT_ID", ""),
+  storageBucket: getEnv("VITE_FIREBASE_STORAGE_BUCKET", ""),
+  messagingSenderId: getEnv("VITE_FIREBASE_MESSAGING_SENDER_ID", ""),
+  appId: getEnv("VITE_FIREBASE_APP_ID", ""),
+  measurementId: getEnv("VITE_FIREBASE_MEASUREMENT_ID", "")
 };
 
 let app: FirebaseApp | undefined;
@@ -37,20 +37,24 @@ try {
   // Check if an app is already initialized to prevent "Component has not been registered" errors
   if (getApps().length > 0) {
     app = getApp();
-  } else {
+  } else if (firebaseConfig.apiKey && firebaseConfig.apiKey.length > 0) {
     app = initializeApp(firebaseConfig);
+  } else {
+    console.warn("Firebase API key is missing. Firebase services will be disabled.");
   }
 
-  // Initialize services
-  auth = getAuth(app);
-  db = getFirestore(app);
+  if (app) {
+    // Initialize services
+    auth = getAuth(app);
+    db = getFirestore(app);
 
-  // Initialize analytics only in browser
-  if (typeof window !== 'undefined') {
-    try {
-      analytics = getAnalytics(app);
-    } catch (e) {
-      console.warn("Analytics failed to initialize (optional):", e);
+    // Initialize analytics only in browser
+    if (typeof window !== 'undefined') {
+      try {
+        analytics = getAnalytics(app);
+      } catch (e) {
+        console.warn("Analytics failed to initialize (optional):", e);
+      }
     }
   }
 } catch (error) {
