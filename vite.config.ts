@@ -19,6 +19,7 @@ export default defineConfig(({ mode }) => {
           const value = valueParts.join('=').trim();
           if (value) {
             env.GEMINI_API_KEY = value;
+            console.log('Overriding GEMINI_API_KEY from .env file:', value.substring(0, 5) + '...');
           }
         }
       }
@@ -27,10 +28,13 @@ export default defineConfig(({ mode }) => {
     console.warn('Failed to read .env file manually:', error);
   }
 
+  console.log('Final GEMINI_API_KEY in Vite config:', env.GEMINI_API_KEY ? env.GEMINI_API_KEY.substring(0, 5) + '...' : 'undefined');
+
   return {
     plugins: [react()],
     define: {
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+      'process.env.GEMINI_API_KEY': JSON.stringify("AIzaSyBUkw46ldA6gxsVyfF6F9f1ATLi1D8B3ZE"),
+      'process.env.MY_NEW_API_KEY': JSON.stringify("AIzaSyBUkw46ldA6gxsVyfF6F9f1ATLi1D8B3ZE"),
     },
     build: {
       outDir: 'dist',
