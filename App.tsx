@@ -130,7 +130,7 @@ const MOHAMED_PORTFOLIO: PortfolioData = {
 
 const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>('upload');
-  const [previousState, setPreviousState] = useState<AppState>('upload');
+  const [tempImage, setTempImage] = useState<string | null>(null);
   
   // Handle direct links and back button
   React.useEffect(() => {
@@ -167,7 +167,6 @@ const App: React.FC = () => {
   };
 
   const handleLegalNavigation = (state: AppState) => {
-    setPreviousState(appState);
     const pathMap: Record<string, string> = {
       'privacy': '/privacy',
       'terms': '/terms',
@@ -192,7 +191,7 @@ const App: React.FC = () => {
 
   const [selectedStyleId, setSelectedStyleId] = useState<string | null>(null);
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
-  const [portfolioData, setPortfolioData] = useState<PortfolioData | null>(MOHAMED_PORTFOLIO);
+  const [portfolioData] = useState<PortfolioData | null>(MOHAMED_PORTFOLIO);
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -445,7 +444,6 @@ const App: React.FC = () => {
 
   const handleSelectArticle = (article: Article) => {
     setSelectedArticle(article);
-    setPreviousState(appState);
     setAppState('blog-post');
     window.history.pushState({ state: 'blog-post' }, '', `/blog/${article.id}`);
   };

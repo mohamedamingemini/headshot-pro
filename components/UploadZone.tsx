@@ -19,7 +19,8 @@ const UploadZone: React.FC<UploadZoneProps> = ({ onImageSelected }) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
+    const isHeic = file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif');
+    if (!file.type.startsWith('image/') && !isHeic) {
       setError(t('errorType'));
       return;
     }

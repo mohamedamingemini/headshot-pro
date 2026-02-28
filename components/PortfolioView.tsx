@@ -4,7 +4,7 @@ import { PortfolioData } from '../types';
 import { 
   Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, Tooltip
 } from 'recharts';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { 
   Briefcase, GraduationCap, Code, ExternalLink, 
   Download, Share2, ArrowLeft, Globe, Award, ChevronRight, Calendar
@@ -31,7 +31,7 @@ const itemVariants = {
   visible: { 
     opacity: 1, 
     y: 0, 
-    transition: { type: "spring", stiffness: 100, damping: 12 } 
+    transition: { type: "spring" as const, stiffness: 100, damping: 12 } 
   }
 };
 

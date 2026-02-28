@@ -4,7 +4,7 @@ import { Article } from '../types';
 import { getArticles, saveArticle, deleteArticle } from '../services/articleService';
 import { generateArticleTags } from '../services/geminiService';
 import { useLanguage } from '../contexts/LanguageContext';
-import { ArrowLeft, Save, Trash2, Plus, AlertCircle, Check, Lock, Search, Filter, X, User as UserIcon, Calendar, GripVertical, Edit2, Loader2, Tag, Sparkles } from 'lucide-react';
+import { ArrowLeft, Save, Trash2, Plus, AlertCircle, Check, Lock, Search, Filter, X, User as UserIcon, Calendar, GripVertical, Edit2, Loader2, Sparkles } from 'lucide-react';
 import Button from './Button';
 
 interface AdminEditorProps {
@@ -33,7 +33,6 @@ const AdminEditor: React.FC<AdminEditorProps> = ({ onBack }) => {
   // Editor State
   const [articles, setArticles] = useState<Article[]>([]);
   const [selectedArticle, setSelectedArticle] = useState<Article>(emptyArticle);
-  const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -50,6 +49,7 @@ const AdminEditor: React.FC<AdminEditorProps> = ({ onBack }) => {
   const [inlineEditingId, setInlineEditingId] = useState<string | null>(null);
   const [inlineEditForm, setInlineEditForm] = useState({ title: '', author: '' });
   const [isInlineSaving, setIsInlineSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   
   // Filter State
   const [searchTerm, setSearchTerm] = useState('');
@@ -226,7 +226,7 @@ const AdminEditor: React.FC<AdminEditorProps> = ({ onBack }) => {
     // Optional: Set custom drag image if needed
   };
 
-  const handleDragOver = (e: React.DragEvent, index: number) => {
+  const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault(); // Necessary to allow dropping
     e.dataTransfer.dropEffect = "move";
   };
@@ -361,7 +361,10 @@ const AdminEditor: React.FC<AdminEditorProps> = ({ onBack }) => {
         {/* Left Column: Filter & List */}
         <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-4 flex flex-col max-h-[85vh]">
             <div className="flex justify-between items-center mb-4 px-2">
-                <h2 className="font-semibold text-white">Articles</h2>
+                <h2 className="font-semibold text-white flex items-center gap-2">
+                  Articles
+                  {isLoading && <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />}
+                </h2>
                 <div className="flex gap-2">
                    <button 
                     onClick={() => setShowFilters(!showFilters)} 
@@ -437,7 +440,7 @@ const AdminEditor: React.FC<AdminEditorProps> = ({ onBack }) => {
                         key={art.id}
                         draggable={!isFiltered && !inlineEditingId}
                         onDragStart={(e) => handleDragStart(e, index)}
-                        onDragOver={(e) => handleDragOver(e, index)}
+                        onDragOver={(e) => handleDragOver(e)}
                         onDrop={(e) => handleDrop(e, index)}
                         onClick={() => handleSelect(art)}
                         className={`

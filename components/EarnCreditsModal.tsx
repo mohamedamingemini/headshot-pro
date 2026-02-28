@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, PlayCircle, Linkedin, CheckCircle, Clock, Video } from 'lucide-react';
+import { X, PlayCircle, Linkedin, Clock, Video } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import Button from './Button';
 import { checkLinkedInEligibility } from '../services/usageService';

@@ -9,7 +9,6 @@ import {
   limit, 
   setDoc, 
   deleteDoc, 
-  updateDoc,
   QuerySnapshot,
   DocumentSnapshot,
   DocumentData

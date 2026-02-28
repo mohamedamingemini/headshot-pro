@@ -29,7 +29,6 @@ const CompareSlider: React.FC<CompareSliderProps> = ({ original, generated, clas
   };
 
   const handleMouseDown = () => setIsDragging(true);
-  const handleMouseUp = () => setIsDragging(false);
 
   // Global event listeners for dragging outside component
   useEffect(() => {

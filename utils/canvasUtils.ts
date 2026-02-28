@@ -1,4 +1,6 @@
 
+import heic2any from 'heic2any';
+
 export const createImage = (url: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {
     const image = new Image();
@@ -30,17 +32,35 @@ export function rotateSize(width: number, height: number, rotation: number) {
  * Compresses and resizes an image file to a base64 string.
  * Uses WebP for better compression efficiency.
  */
-export const compressImage = (
+export const compressImage = async (
   file: File,
   maxWidth: number = 1600,
   quality: number = 0.85
 ): Promise<string> => {
+  let processedFile = file;
+  
+  // Convert HEIC/HEIF to JPEG if necessary
+  if (file.type === 'image/heic' || file.type === 'image/heif' || file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')) {
+    try {
+      const convertedBlob = await heic2any({
+        blob: file,
+        toType: 'image/jpeg',
+        quality: 0.8
+      });
+      
+      // heic2any can return an array of blobs for animated HEIC, we just take the first one
+      const blobToUse = Array.isArray(convertedBlob) ? convertedBlob[0] : convertedBlob;
+      processedFile = new File([blobToUse], file.name.replace(/\.heic$/i, '.jpg'), { type: 'image/jpeg' });
+    } catch (error) {
+      console.error('Error converting HEIC to JPEG:', error);
+      throw new Error('Failed to process HEIC image');
+    }
+  }
+
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.readAsDataURL(file);
     reader.onload = (event) => {
       const img = new Image();
-      img.src = event.target?.result as string;
       img.onload = () => {
         const canvas = document.createElement('canvas');
         let width = img.width;
@@ -63,8 +83,10 @@ export const compressImage = (
         resolve(canvas.toDataURL('image/webp', quality));
       };
       img.onerror = (error) => reject(error);
+      img.src = event.target?.result as string;
     };
     reader.onerror = (error) => reject(error);
+    reader.readAsDataURL(processedFile);
   });
 };
 

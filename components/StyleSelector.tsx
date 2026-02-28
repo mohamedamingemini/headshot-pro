@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { HeadshotStyle } from '../types';
 import { HEADSHOT_STYLES, AD_CONFIG } from '../constants';
-import { Check, Loader2, Sparkles, Wand2, Play } from 'lucide-react';
+import { Check, Loader2, Sparkles, Wand2 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import AdSense from './AdSense';
 import { generateHeadshot } from '../services/geminiService';

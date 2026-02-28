@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Article } from '../types';
 import { getArticleById } from '../services/articleService';
 import { useLanguage } from '../contexts/LanguageContext';
-import { ArrowLeft, Calendar, User, Clock, Share2, Linkedin, Twitter, Facebook, Link as LinkIcon, Check, Tag } from 'lucide-react';
+import { ArrowLeft, Calendar, User, Clock, Linkedin, Twitter, Facebook, Link as LinkIcon, Check, Tag } from 'lucide-react';
 import Button from './Button';
 import AdSense from './AdSense';
 import { AD_CONFIG } from '../constants';
