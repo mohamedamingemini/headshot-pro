@@ -1,7 +1,10 @@
 
+/// <reference types="vite/client" />
+
 declare namespace NodeJS {
   interface ProcessEnv {
     GEMINI_API_KEY: string;
+    VITE_GEMINI_API_KEY: string;
     VITE_FIREBASE_API_KEY: string;
     VITE_FIREBASE_AUTH_DOMAIN: string;
     VITE_FIREBASE_PROJECT_ID: string;
@@ -14,6 +17,7 @@ declare namespace NodeJS {
 }
 
 interface ImportMetaEnv {
+  readonly VITE_GEMINI_API_KEY: string
   readonly VITE_FIREBASE_API_KEY: string
   readonly VITE_FIREBASE_AUTH_DOMAIN: string
   readonly VITE_FIREBASE_PROJECT_ID: string

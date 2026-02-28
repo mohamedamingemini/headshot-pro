@@ -58,7 +58,7 @@ export const generateHeadshot = async (
   originalImageBase64: string,
   stylePrompt: string
 ): Promise<string> => {
-  const apiKey = process.env.MY_NEW_API_KEY || process.env.GEMINI_API_KEY;
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || process.env.MY_NEW_API_KEY || process.env.GEMINI_API_KEY;
   console.log("API Key loaded in generateHeadshot:", apiKey ? `${apiKey.substring(0, 5)}...` : "undefined");
   if (!apiKey) {
     throw new Error("API Key is missing. If you are on Vercel, please add 'GEMINI_API_KEY' to your Project Settings > Environment Variables.");
@@ -156,7 +156,7 @@ export const editHeadshot = async (
   currentImageBase64: string,
   editPrompt: string
 ): Promise<string> => {
-  const apiKey = process.env.MY_NEW_API_KEY || process.env.GEMINI_API_KEY;
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || process.env.MY_NEW_API_KEY || process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error("API Key is missing.");
   }
@@ -215,7 +215,7 @@ export const editHeadshot = async (
 export const generateArticleTags = async (
   content: string
 ): Promise<string[]> => {
-  const apiKey = process.env.MY_NEW_API_KEY || process.env.GEMINI_API_KEY;
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || process.env.MY_NEW_API_KEY || process.env.GEMINI_API_KEY;
   if (!apiKey) return [];
   const ai = new GoogleGenAI({ apiKey });
 
@@ -234,7 +234,7 @@ export const generateArticleTags = async (
 };
 
 export const parseCV = async (cvText: string): Promise<PortfolioData> => {
-  const apiKey = process.env.MY_NEW_API_KEY || process.env.GEMINI_API_KEY;
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || process.env.MY_NEW_API_KEY || process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new Error("API Key is missing.");
   }
