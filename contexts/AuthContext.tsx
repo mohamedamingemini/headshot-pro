@@ -27,7 +27,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     if (!auth) {
-      console.warn("Auth service is not available. Authentication features will be disabled.");
+      // console.warn("Auth service is not available. Authentication features will be disabled.");
       setLoading(false);
       return;
     }

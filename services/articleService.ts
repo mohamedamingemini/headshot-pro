@@ -681,33 +681,65 @@ const withTimeout = <T>(promise: Promise<T>, ms: number = 2000): Promise<T> => {
 let isBackendAvailable = true;
 
 export const getArticles = async (): Promise<Article[]> => {
-  if (!db || !isBackendAvailable) return MOCK_ARTICLES;
+  let allArticles: Article[] = [];
+
+  // 1. Fetch received posts from our backend
+  try {
+    const response = await fetch('/api/blog/received');
+    if (response.ok) {
+      const receivedPosts = await response.json();
+      allArticles = [...receivedPosts];
+    }
+  } catch (error) {
+    console.warn("Could not fetch received posts from backend:", error);
+  }
+
+  // 2. Fetch from Firebase or use Mock
+  if (!db || !isBackendAvailable) {
+    return [...allArticles, ...MOCK_ARTICLES];
+  }
 
   try {
     const q = query(collection(db, "articles"), orderBy("date", "desc"), limit(20));
     // Use timeout to prevent infinite loading if Firebase connection hangs
     const querySnapshot = await withTimeout<QuerySnapshot<DocumentData>>(getDocs(q));
     
-    if (querySnapshot.empty) {
-      return MOCK_ARTICLES;
+    let firebaseArticles: Article[] = [];
+    if (!querySnapshot.empty) {
+      firebaseArticles = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Article));
+    } else {
+      firebaseArticles = MOCK_ARTICLES;
     }
 
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    } as Article));
+    return [...allArticles, ...firebaseArticles];
   } catch (error) {
     console.warn("Using mock articles due to Firestore error/timeout:", error);
     isBackendAvailable = false; // Disable backend for this session
-    return MOCK_ARTICLES;
+    return [...allArticles, ...MOCK_ARTICLES];
   }
 };
 
 export const getArticleById = async (id: string): Promise<Article | undefined> => {
-  // First check mock data for speed/fallback
+  // 1. Check mock data
   const mock = MOCK_ARTICLES.find(a => a.id === id);
   if (mock) return mock;
 
+  // 2. Check received posts from backend
+  try {
+    const response = await fetch('/api/blog/received');
+    if (response.ok) {
+      const receivedPosts = await response.json();
+      const received = receivedPosts.find((a: Article) => a.id === id);
+      if (received) return received;
+    }
+  } catch (error) {
+    console.warn("Could not fetch received posts for ID check:", error);
+  }
+
+  // 3. Check Firebase
   if (!db || !isBackendAvailable) return undefined;
 
   try {

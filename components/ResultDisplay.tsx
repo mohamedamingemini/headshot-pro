@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Download, Layers, Palette, Undo, Redo, Share2, Check, SplitSquareHorizontal, ArrowRight, Sun, Contrast, Droplets, RotateCcw } from 'lucide-react';
+import { Download, Layers, Palette, Undo, Redo, Share2, Check, SplitSquareHorizontal, ArrowRight, Sun, Contrast, Droplets, RotateCcw, Heart } from 'lucide-react';
 import AdSense from './AdSense';
 import { useLanguage } from '../contexts/LanguageContext';
 import ChatInterface from './ChatInterface';
@@ -12,6 +12,7 @@ import { getArticles } from '../services/articleService';
 interface ResultDisplayProps {
   originalImage: string;
   generatedImage: string;
+  styleName?: string;
   onUndo?: () => void;
   onRedo?: () => void;
   canUndo?: boolean;
@@ -25,6 +26,7 @@ interface ResultDisplayProps {
 const ResultDisplay: React.FC<ResultDisplayProps> = ({ 
   originalImage, 
   generatedImage,
+  styleName = 'Custom Style',
   onUndo,
   onRedo,
   canUndo = false,
@@ -44,6 +46,7 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
   const [shareMessage, setShareMessage] = useState<string | null>(null);
   const [isCompareMode, setIsCompareMode] = useState(false);
   const [suggestedArticle, setSuggestedArticle] = useState<Article | null>(null);
+  const [isSaved, setIsSaved] = useState(false);
   const { t } = useLanguage();
 
   useEffect(() => {
@@ -60,6 +63,27 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
     };
     loadSuggestion();
   }, []);
+
+  const handleSaveFavorite = () => {
+    try {
+      const saved = localStorage.getItem('proheadshot_favorites');
+      const favorites = saved ? JSON.parse(saved) : [];
+      
+      const newFavorite = {
+        id: `fav-${Date.now()}`,
+        url: generatedImage,
+        styleName,
+        date: new Date().toISOString()
+      };
+      
+      favorites.push(newFavorite);
+      localStorage.setItem('proheadshot_favorites', JSON.stringify(favorites));
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 2000);
+    } catch (e) {
+      console.error("Failed to save favorite", e);
+    }
+  };
 
   const filterOptions = [
     { id: 'none', label: t('filterNormal') },
@@ -289,6 +313,17 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
                <Redo className="w-5 h-5 sm:w-4 sm:h-4 rtl:-scale-x-100" />
              </button>
              
+             <div className="h-6 w-px bg-slate-700 mx-1" />
+             
+             <button 
+               onClick={handleSaveFavorite}
+               className={`p-2 sm:p-0 sm:text-xs flex items-center gap-1.5 transition-colors sm:min-w-[70px] justify-center rounded-lg hover:bg-slate-800 sm:hover:bg-transparent touch-manipulation ${isSaved ? 'text-red-400' : 'text-slate-300 hover:text-white'}`}
+               title="Save to Favorites"
+             >
+               {isSaved ? <Check className="w-5 h-5 sm:w-4 sm:h-4" /> : <Heart className={`w-5 h-5 sm:w-4 sm:h-4 ${isSaved ? 'fill-current' : ''}`} />}
+               <span className="hidden sm:inline">{isSaved ? 'Saved' : 'Favorite'}</span>
+             </button>
+
              <div className="h-6 w-px bg-slate-700 mx-1" />
              
              <button 

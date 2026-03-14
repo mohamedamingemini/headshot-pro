@@ -59,4 +59,4 @@ export interface PortfolioData {
   }[];
 }
 
-export type AppState = 'upload' | 'cropping' | 'style-selection' | 'generating' | 'result' | 'privacy' | 'terms' | 'contact' | 'about' | 'blog-list' | 'blog-post' | 'admin' | 'portfolio-builder' | 'portfolio-view';
+export type AppState = 'upload' | 'cropping' | 'style-selection' | 'generating' | 'result' | 'privacy' | 'terms' | 'contact' | 'about' | 'blog-list' | 'blog-post' | 'admin' | 'portfolio-builder' | 'portfolio-view' | 'favorites';

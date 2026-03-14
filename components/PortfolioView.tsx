@@ -7,13 +7,11 @@ import {
 import { motion } from 'framer-motion';
 import { 
   Briefcase, GraduationCap, Code, ExternalLink, 
-  Download, Share2, ArrowLeft, Globe, Award, ChevronRight, Calendar
+  Download, Globe, Award, ChevronRight, Calendar
 } from 'lucide-react';
-import Button from './Button';
 
 interface PortfolioViewProps {
   data: PortfolioData;
-  onBack: () => void;
 }
 
 const containerVariants = {
@@ -35,16 +33,8 @@ const itemVariants = {
   }
 };
 
-const PortfolioView: React.FC<PortfolioViewProps> = ({ data, onBack }) => {
+const PortfolioView: React.FC<PortfolioViewProps> = ({ data }) => {
   const [hoveredExp, setHoveredExp] = useState<number | null>(null);
-  const [copied, setCopied] = useState(false);
-
-  const handleCopyLink = () => {
-    const url = `${window.location.origin}/portfolio`;
-    navigator.clipboard.writeText(url);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   return (
     <div className="min-h-screen bg-[#050505] text-slate-200 pb-20 relative overflow-hidden">
@@ -56,36 +46,16 @@ const PortfolioView: React.FC<PortfolioViewProps> = ({ data, onBack }) => {
 
       {/* Header / Navigation */}
       <nav className="sticky top-0 z-50 bg-[#050505]/80 backdrop-blur-xl border-b border-white/5 px-6 py-4">
-        <div className="max-w-[1800px] mx-auto flex items-center justify-between">
-          <Button variant="ghost" onClick={onBack} className="text-slate-400 hover:text-white transition-colors text-base">
-            <ArrowLeft className="w-5 h-5 mr-2" />
-            Back
-          </Button>
+        <div className="max-w-[1800px] mx-auto flex items-center justify-end">
           <div className="flex gap-4">
-            <Button 
-              variant="outline" 
-              size="lg" 
-              onClick={handleCopyLink}
-              className="flex items-center gap-2 border-white/10 hover:bg-white/5 transition-all text-sm px-5 py-2.5"
+            <a 
+              href="/Mohamed_Farid_Amin_CV.pdf" 
+              download="Mohamed_Farid_Amin_CV.pdf"
+              className="flex items-center gap-2 border border-white/10 hover:bg-white/5 text-slate-200 text-sm px-5 py-2.5 rounded-xl transition-all font-medium"
             >
-              {copied ? (
-                <>
-                  <div className="w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center">
-                    <div className="w-2 h-2 bg-white rounded-full" />
-                  </div>
-                  Copied!
-                </>
-              ) : (
-                <>
-                  <Share2 className="w-4 h-4" />
-                  Copy Link
-                </>
-              )}
-            </Button>
-            <Button variant="outline" size="lg" className="hidden sm:flex items-center gap-2 border-white/10 hover:bg-white/5 text-sm px-5 py-2.5">
               <Download className="w-4 h-4" />
               Download CV
-            </Button>
+            </a>
           </div>
         </div>
       </nav>

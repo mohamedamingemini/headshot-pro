@@ -61,10 +61,14 @@ const getApiKey = async (): Promise<string> => {
   if (!apiKey) {
     try {
       // Fetch from server if not available in env
+      console.log("Fetching API key from server...");
       const response = await fetch('/api/config');
       if (response.ok) {
         const data = await response.json();
         apiKey = data.geminiApiKey;
+        console.log("API Key fetched from server:", apiKey ? "FOUND" : "NOT FOUND");
+      } else {
+        console.warn("Failed to fetch API key from server config: Response not OK", response.status);
       }
     } catch (e) {
       console.warn("Failed to fetch API key from server config", e);
@@ -72,7 +76,18 @@ const getApiKey = async (): Promise<string> => {
   }
 
   if (!apiKey) {
-    throw new Error("API Key is missing. Please select a valid API key.");
+    // Check if we can prompt the user
+    if (typeof window !== 'undefined' && window.aistudio) {
+       const hasKey = await window.aistudio.hasSelectedApiKey();
+       if (!hasKey) {
+         throw new Error("Gemini API Key is missing. Please select a valid API key to generate headshots.");
+       } else {
+         // If hasKey is true but we don't have the key string, we are in a weird state.
+         // The key should be in process.env on the server.
+         throw new Error("Gemini API Key selected but not available in environment. Please reload the page.");
+       }
+    }
+    throw new Error("Gemini API Key is missing. Please select a valid API key.");
   }
   return apiKey;
 };

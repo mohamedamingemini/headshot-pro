@@ -71,6 +71,26 @@
       ::-webkit-scrollbar-track { background: #1e293b; }
       ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
       ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+      /* Light Mode Toggle (CSS Filter Hack) */
+      html.light-mode {
+        filter: invert(1) hue-rotate(180deg);
+        background-color: #f0f0f0;
+      }
+
+      /* Re-invert images, videos, and specific elements so they look normal */
+      html.light-mode img,
+      html.light-mode video,
+      html.light-mode canvas,
+      html.light-mode [style*="background-image"],
+      html.light-mode .no-invert {
+        filter: invert(1) hue-rotate(180deg);
+      }
+
+      /* Fix specific UI elements that look weird inverted */
+      html.light-mode .bg-indigo-600 {
+        background-color: #4f46e5;
+      }
     </style>
   <script type="importmap">
 {

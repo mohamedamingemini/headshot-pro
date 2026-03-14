@@ -40,7 +40,7 @@ try {
   } else if (firebaseConfig.apiKey && firebaseConfig.apiKey.length > 0) {
     app = initializeApp(firebaseConfig);
   } else {
-    console.warn("Firebase API key is missing. Firebase services will be disabled.");
+    // console.warn("Firebase API key is missing. Firebase services will be disabled.");
   }
 
   if (app) {

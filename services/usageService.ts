@@ -62,8 +62,10 @@ export const getUsageStats = (userId?: string | null) => {
 };
 
 export const checkDailyLimit = async (userId?: string | null): Promise<{ allowed: boolean; timeRemainingStr?: string; reason?: string }> => {
+  console.log("checkDailyLimit called for user:", userId);
   // 1. Check IP-based limit first (Abuse prevention)
   const ip = await getUserIP();
+  console.log("User IP:", ip);
   if (ip) {
     const ipKey = `ip_usage_${ip}`;
     const storedIpData = localStorage.getItem(ipKey);
@@ -71,11 +73,13 @@ export const checkDailyLimit = async (userId?: string | null): Promise<{ allowed
 
     if (storedIpData) {
       const ipData: UsageData = JSON.parse(storedIpData);
+      console.log("IP Data:", ipData);
       if (now - ipData.firstUsageTime < TWENTY_FOUR_HOURS_MS) {
         if (ipData.count >= MAX_IP_DAILY_USAGE) {
           const timeUntilReset = Math.max(0, (ipData.firstUsageTime + TWENTY_FOUR_HOURS_MS) - now);
           const hours = Math.floor(timeUntilReset / (1000 * 60 * 60));
           const minutes = Math.floor((timeUntilReset % (1000 * 60 * 60)) / (1000 * 60));
+          console.log("IP limit reached");
           return { 
             allowed: false, 
             timeRemainingStr: `${hours}h ${minutes}m`,
@@ -91,6 +95,7 @@ export const checkDailyLimit = async (userId?: string | null): Promise<{ allowed
 
   // 2. Check regular user/browser limit
   const stats = getUsageStats(userId);
+  console.log("User Stats:", stats);
 
   if (stats.count >= MAX_DAILY_USAGE) {
     if (stats.remaining > 0) {
@@ -99,6 +104,7 @@ export const checkDailyLimit = async (userId?: string | null): Promise<{ allowed
 
     const hours = Math.floor(stats.timeUntilReset / (1000 * 60 * 60));
     const minutes = Math.floor((stats.timeUntilReset % (1000 * 60 * 60)) / (1000 * 60));
+    console.log("User limit reached");
     return { 
       allowed: false, 
       timeRemainingStr: `${hours}h ${minutes}m`,

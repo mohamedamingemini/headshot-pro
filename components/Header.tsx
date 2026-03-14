@@ -1,26 +1,38 @@
 
 import React, { useEffect, useState } from 'react';
-import { Camera, RefreshCw, Languages, Zap, Plus, BookOpen } from 'lucide-react';
+import { Camera, Languages, BookOpen, Heart, Sun, Moon } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
-import { getUsageStats } from '../services/usageService';
 
 interface HeaderProps {
-  onReset: () => void;
-  canReset: boolean;
-  refreshKey?: number; // Prop to force re-render when usage changes
-  onOpenCredits: () => void;
   onNavigateBlog: () => void;
   onNavigatePortfolio: () => void;
+  onNavigateFavorites: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onReset, canReset, refreshKey, onOpenCredits, onNavigateBlog, onNavigatePortfolio }) => {
+const Header: React.FC<HeaderProps> = ({ onNavigateBlog, onNavigatePortfolio, onNavigateFavorites }) => {
   const { language, setLanguage, t } = useLanguage();
-  const [credits, setCredits] = useState(3);
+  const [isDarkMode, setIsDarkMode] = useState(true);
 
   useEffect(() => {
-    const stats = getUsageStats();
-    setCredits(stats.remaining);
-  }, [refreshKey]); // Update when parent signals a change
+    // Check if user previously set light mode
+    const savedTheme = localStorage.getItem('proheadshot_theme');
+    if (savedTheme === 'light') {
+      setIsDarkMode(false);
+      document.documentElement.classList.add('light-mode');
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('light-mode');
+      localStorage.setItem('proheadshot_theme', 'light');
+      setIsDarkMode(false);
+    } else {
+      document.documentElement.classList.remove('light-mode');
+      localStorage.setItem('proheadshot_theme', 'dark');
+      setIsDarkMode(true);
+    }
+  };
 
   const toggleLanguage = () => {
     setLanguage(language === 'en' ? 'ar' : 'en');
@@ -31,7 +43,7 @@ const Header: React.FC<HeaderProps> = ({ onReset, canReset, refreshKey, onOpenCr
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <button 
-            onClick={onReset}
+            onClick={onNavigatePortfolio}
             className="flex items-center gap-3 hover:opacity-80 transition-opacity"
           >
             <div className="bg-indigo-600 p-2 rounded-lg">
@@ -47,6 +59,24 @@ const Header: React.FC<HeaderProps> = ({ onReset, canReset, refreshKey, onOpenCr
           
           <div className="flex items-center gap-3 sm:gap-4">
             
+            {/* Theme Toggle */}
+            <button 
+              onClick={toggleTheme}
+              className="p-2 text-slate-400 hover:text-white transition-colors bg-slate-800/50 rounded-lg border border-slate-700/50"
+              title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            >
+              {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+
+            {/* Favorites Link */}
+            <button 
+              onClick={onNavigateFavorites}
+              className="flex items-center gap-2 text-sm font-medium text-slate-300 hover:text-white transition-colors hover:bg-slate-800 px-3 py-1.5 rounded-lg"
+            >
+               <Heart className="w-4 h-4" />
+               <span className="hidden sm:inline">Favorites</span>
+            </button>
+
             {/* Portfolio Link - Desktop */}
             <button 
               onClick={onNavigatePortfolio}
@@ -65,18 +95,6 @@ const Header: React.FC<HeaderProps> = ({ onReset, canReset, refreshKey, onOpenCr
                <span className="hidden sm:inline">Blog</span>
             </button>
 
-            {/* Credits Counter - Now Clickable */}
-            <button 
-              onClick={onOpenCredits}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800/80 hover:bg-slate-800 rounded-full border border-indigo-500/30 hover:border-indigo-500/60 text-xs font-medium text-indigo-300 shadow-lg shadow-indigo-900/20 transition-all cursor-pointer group"
-            >
-               <Zap className={`w-3.5 h-3.5 ${credits > 0 ? 'text-yellow-400 fill-yellow-400' : 'text-slate-500'}`} />
-               <span>{t('creditsRemaining').replace('{amount}', credits.toString())}</span>
-               <div className="w-4 h-4 rounded-full bg-indigo-500 text-white flex items-center justify-center ml-1 group-hover:scale-110 transition-transform">
-                 <Plus className="w-3 h-3" />
-               </div>
-            </button>
-
             <button
                 onClick={toggleLanguage}
                 className="flex items-center gap-2 text-sm font-medium text-slate-400 hover:text-white transition-colors bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-700/50 hidden md:flex"
@@ -84,16 +102,6 @@ const Header: React.FC<HeaderProps> = ({ onReset, canReset, refreshKey, onOpenCr
                 <Languages className="w-4 h-4" />
                 <span>{language === 'en' ? 'العربية' : 'English'}</span>
             </button>
-
-            {canReset && (
-              <button 
-                onClick={onReset}
-                className="flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-700/50"
-              >
-                <RefreshCw className="w-4 h-4" />
-                <span className="hidden lg:inline">{t('startOver')}</span>
-              </button>
-            )}
           </div>
         </div>
       </div>
